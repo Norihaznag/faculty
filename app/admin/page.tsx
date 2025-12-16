@@ -1,0 +1,816 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { MainLayout } from '@/components/layout/main-layout';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { useAuth } from '@/lib/auth-context';
+import { supabase, Upload, Profile } from '@/lib/supabase';
+import { slugify } from '@/lib/utils/slug';
+import { Shield, CheckCircle, XCircle, Clock, Users, BookOpen, Trash2, UserX, UserCheck, Edit } from 'lucide-react';
+import { format } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+export default function AdminPage() {
+  const router = useRouter();
+  const { user, profile, loading: authLoading } = useAuth();
+  const [uploads, setUploads] = useState<Upload[]>([]);
+  const [selectedUpload, setSelectedUpload] = useState<Upload | null>(null);
+  const [adminNotes, setAdminNotes] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [uploadToDelete, setUploadToDelete] = useState<Upload | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [stats, setStats] = useState({ totalUsers: 0, totalLessons: 0, pendingUploads: 0 });
+  const [allUsers, setAllUsers] = useState<Profile[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
+  const [roleDialogOpen, setRoleDialogOpen] = useState(false);
+  const [newRole, setNewRole] = useState<'student' | 'teacher' | 'admin'>('student');
+  const [updatingRole, setUpdatingRole] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading && (!user || (profile?.role !== 'admin' && profile?.role !== 'teacher'))) {
+      router.push('/');
+    } else if (profile?.role === 'admin' || profile?.role === 'teacher') {
+      fetchData();
+      if (profile?.role === 'admin') {
+        fetchUsers();
+      }
+    }
+  }, [user, profile, authLoading]);
+
+  const fetchData = async () => {
+    try {
+      // Fetch uploads first (without joins to avoid RLS issues)
+      const uploadsRes = await supabase
+        .from('uploads')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (uploadsRes.error) {
+        console.error('Error fetching uploads:', uploadsRes.error);
+        setUploads([]);
+        return;
+      }
+
+      console.log('Fetched uploads:', uploadsRes.data?.length, uploadsRes.data);
+
+      // Fetch related data for each upload
+      const uploadsWithRelations = await Promise.all(
+        (uploadsRes.data || []).map(async (upload) => {
+          const [subjectRes, uploaderRes] = await Promise.all([
+            upload.subject_id
+              ? supabase.from('subjects').select('*').eq('id', upload.subject_id).maybeSingle()
+              : Promise.resolve({ data: null, error: null }),
+            upload.uploader_id
+              ? supabase.from('profiles').select('*').eq('id', upload.uploader_id).maybeSingle()
+              : Promise.resolve({ data: null, error: null }),
+          ]);
+
+          return {
+            ...upload,
+            subject: subjectRes.data || null,
+            uploader: uploaderRes.data || null,
+          };
+        })
+      );
+
+      setUploads(uploadsWithRelations);
+
+      // Fetch stats
+      const [usersRes, lessonsRes] = await Promise.all([
+        supabase.from('profiles').select('id', { count: 'exact', head: true }),
+        supabase.from('lessons').select('id', { count: 'exact', head: true }),
+      ]);
+
+      setStats({
+        totalUsers: usersRes.count || 0,
+        totalLessons: lessonsRes.count || 0,
+        pendingUploads: uploadsWithRelations.filter((u) => u.status === 'pending').length,
+      });
+    } catch (error) {
+      console.error('Error in fetchData:', error);
+      setUploads([]);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      setUsersLoading(true);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching users:', error);
+        setAllUsers([]);
+      } else {
+        setAllUsers(data || []);
+      }
+    } catch (error) {
+      console.error('Error in fetchUsers:', error);
+      setAllUsers([]);
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  const handleRoleChange = async () => {
+    if (!selectedUser) return;
+
+    setUpdatingRole(true);
+    const { error } = await supabase
+      .from('profiles')
+      .update({ role: newRole })
+      .eq('id', selectedUser.id);
+
+    if (error) {
+      console.error('Error updating role:', error);
+      alert('Failed to update role. Please try again.');
+    } else {
+      await fetchUsers();
+      setRoleDialogOpen(false);
+      setSelectedUser(null);
+    }
+    setUpdatingRole(false);
+  };
+
+  const handleToggleUserStatus = async (user: Profile) => {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ is_active: !user.is_active })
+      .eq('id', user.id);
+
+    if (error) {
+      console.error('Error updating user status:', error);
+      alert('Failed to update user status. Please try again.');
+    } else {
+      await fetchUsers();
+      // If deactivating current user, sign them out
+      if (user.id === profile?.id && user.is_active) {
+        await supabase.auth.signOut();
+        router.push('/auth/login');
+      }
+    }
+  };
+
+  const handleApprove = async (upload: Upload) => {
+    setActionLoading(true);
+
+    let finalSubjectId = upload.subject_id;
+
+    // If there's a suggested subject name but no subject_id, create the subject
+    if (upload.suggested_subject_name && !upload.subject_id) {
+      const subjectSlug = slugify(upload.suggested_subject_name);
+      const { data: newSubject, error: subjectError } = await supabase
+        .from('subjects')
+        .insert({
+          name: upload.suggested_subject_name,
+          slug: subjectSlug,
+          order_index: 0,
+        })
+        .select()
+        .single();
+
+      if (!subjectError && newSubject) {
+        finalSubjectId = newSubject.id;
+      }
+    }
+
+    if (!finalSubjectId) {
+      setActionLoading(false);
+      return;
+    }
+
+    const slug = slugify(upload.title);
+
+    const { error: lessonError } = await supabase.from('lessons').insert({
+      title: upload.title,
+      slug: slug,
+      content: upload.content,
+      subject_id: finalSubjectId,
+      semester: upload.semester,
+      pdf_url: upload.pdf_url,
+      external_link: upload.external_link,
+      author_id: upload.uploader_id,
+      is_published: true,
+      is_premium: false,
+    });
+
+    if (!lessonError) {
+      await supabase
+        .from('uploads')
+        .update({
+          status: 'approved',
+          reviewed_by: user?.id,
+          reviewed_at: new Date().toISOString(),
+          admin_notes: adminNotes,
+          subject_id: finalSubjectId, // Update with created subject if needed
+        })
+        .eq('id', upload.id);
+
+      await fetchData();
+      setSelectedUpload(null);
+      setAdminNotes('');
+    }
+
+    setActionLoading(false);
+  };
+
+  const handleReject = async (upload: Upload) => {
+    setActionLoading(true);
+
+    await supabase
+      .from('uploads')
+      .update({
+        status: 'rejected',
+        reviewed_by: user?.id,
+        reviewed_at: new Date().toISOString(),
+        admin_notes: adminNotes,
+      })
+      .eq('id', upload.id);
+
+    await fetchData();
+    setSelectedUpload(null);
+    setAdminNotes('');
+    setActionLoading(false);
+  };
+
+  const handleDelete = async () => {
+    if (!uploadToDelete) return;
+
+    setDeleting(true);
+    const { error } = await supabase
+      .from('uploads')
+      .delete()
+      .eq('id', uploadToDelete.id);
+
+    if (error) {
+      console.error('Error deleting upload:', error);
+      alert('Failed to delete upload. Please try again.');
+    } else {
+      await fetchData();
+      setDeleteDialogOpen(false);
+      setUploadToDelete(null);
+    }
+    setDeleting(false);
+  };
+
+  if (authLoading) {
+    return (
+      <MainLayout>
+        <div className="container mx-auto px-4 py-8">
+          <p>Loading...</p>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (profile?.role !== 'admin' && profile?.role !== 'teacher') {
+    return null;
+  }
+
+  const isAdmin = profile?.role === 'admin';
+
+  // Filter out admin's own uploads from pending (admins publish directly, so they shouldn't appear here)
+  const pendingUploads = uploads.filter((u) => u.status === 'pending' && u.uploader_id !== user?.id);
+  const approvedUploads = uploads.filter((u) => u.status === 'approved');
+  const rejectedUploads = uploads.filter((u) => u.status === 'rejected');
+
+  return (
+    <MainLayout>
+      <div className="container mx-auto px-4 py-8 space-y-8">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Shield className="h-6 w-6" />
+            <h1 className="text-3xl font-bold">
+              {isAdmin ? 'Admin Dashboard' : 'Moderator Dashboard'}
+            </h1>
+          </div>
+          <Button onClick={fetchData} variant="outline" size="sm">
+            Refresh
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalUsers}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Published Lessons</CardTitle>
+              <BookOpen className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalLessons}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pending Approvals</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.pendingUploads}</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Tabs defaultValue="pending">
+          <TabsList>
+            <TabsTrigger value="pending">
+              Pending ({pendingUploads.length})
+            </TabsTrigger>
+            <TabsTrigger value="approved">
+              Approved ({approvedUploads.length})
+            </TabsTrigger>
+            <TabsTrigger value="rejected">
+              Rejected ({rejectedUploads.length})
+            </TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger value="users">
+                Users ({allUsers.length})
+              </TabsTrigger>
+            )}
+          </TabsList>
+
+          <TabsContent value="pending" className="space-y-4">
+            {uploads.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6">
+                  <p className="text-center text-muted-foreground">
+                    No uploads found. Check browser console for errors.
+                  </p>
+                  <p className="text-center text-xs text-muted-foreground mt-2">
+                    Total uploads in state: {uploads.length}
+                  </p>
+                </CardContent>
+              </Card>
+            ) : pendingUploads.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6">
+                  <p className="text-center text-muted-foreground">
+                    No pending uploads to review
+                  </p>
+                  <p className="text-center text-xs text-muted-foreground mt-2">
+                    Total uploads: {uploads.length} (Pending: {pendingUploads.length}, Approved: {approvedUploads.length}, Rejected: {rejectedUploads.length})
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              pendingUploads.map((upload) => (
+                <Card key={upload.id}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle>{upload.title}</CardTitle>
+                        <CardDescription>
+                          Submitted by {upload.uploader?.full_name} on{' '}
+                          {format(new Date(upload.created_at), 'MMM d, yyyy')}
+                        </CardDescription>
+                      </div>
+                      <Badge variant="secondary">
+                        <Clock className="mr-1 h-3 w-3" />
+                        Pending
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="font-medium">Subject:</span>{' '}
+                        {upload.subject?.name || (
+                          <span className="text-orange-600 font-semibold">
+                            {upload.suggested_subject_name} (New - will be created on approval)
+                          </span>
+                        )}
+                      </div>
+                      {upload.semester && (
+                        <div>
+                          <span className="font-medium">Semester:</span> {upload.semester}
+                        </div>
+                      )}
+                      {upload.pdf_url && (
+                        <div className="col-span-2">
+                          <span className="font-medium">PDF:</span>{' '}
+                          <a
+                            href={upload.pdf_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            View PDF
+                          </a>
+                        </div>
+                      )}
+                      {upload.external_link && (
+                        <div className="col-span-2">
+                          <span className="font-medium">Link:</span>{' '}
+                          <a
+                            href={upload.external_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            Visit Link
+                          </a>
+                        </div>
+                      )}
+                    </div>
+
+                    {upload.content && (
+                      <div>
+                        <p className="font-medium text-sm mb-2">Content Preview:</p>
+                        <div className="bg-muted p-4 rounded-lg max-h-40 overflow-y-auto text-sm">
+                          {upload.content.substring(0, 300)}
+                          {upload.content.length > 300 && '...'}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => {
+                          setSelectedUpload(upload);
+                          setAdminNotes('');
+                        }}
+                        variant="default"
+                      >
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Approve
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setSelectedUpload(upload);
+                          setAdminNotes('');
+                        }}
+                        variant="destructive"
+                      >
+                        <XCircle className="mr-2 h-4 w-4" />
+                        Reject
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setUploadToDelete(upload);
+                          setDeleteDialogOpen(true);
+                        }}
+                        variant="outline"
+                        size="sm"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </TabsContent>
+
+          <TabsContent value="approved" className="space-y-4">
+            {approvedUploads.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6">
+                  <p className="text-center text-muted-foreground">
+                    No approved uploads
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              approvedUploads.map((upload) => (
+                <Card key={upload.id}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle>{upload.title}</CardTitle>
+                        <CardDescription>
+                          Submitted by {upload.uploader?.full_name}
+                        </CardDescription>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge>
+                          <CheckCircle className="mr-1 h-3 w-3" />
+                          Approved
+                        </Badge>
+                        <Button
+                          onClick={() => {
+                            setUploadToDelete(upload);
+                            setDeleteDialogOpen(true);
+                          }}
+                          variant="outline"
+                          size="sm"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                </Card>
+              ))
+            )}
+          </TabsContent>
+
+          <TabsContent value="rejected" className="space-y-4">
+            {rejectedUploads.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6">
+                  <p className="text-center text-muted-foreground">
+                    No rejected uploads
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              rejectedUploads.map((upload) => (
+                <Card key={upload.id}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle>{upload.title}</CardTitle>
+                        <CardDescription>
+                          Submitted by {upload.uploader?.full_name}
+                        </CardDescription>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="destructive">
+                          <XCircle className="mr-1 h-3 w-3" />
+                          Rejected
+                        </Badge>
+                        <Button
+                          onClick={() => {
+                            setUploadToDelete(upload);
+                            setDeleteDialogOpen(true);
+                          }}
+                          variant="outline"
+                          size="sm"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  {upload.admin_notes && (
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">
+                        <span className="font-medium">Reason:</span> {upload.admin_notes}
+                      </p>
+                    </CardContent>
+                  )}
+                </Card>
+              ))
+            )}
+          </TabsContent>
+
+          <TabsContent value="users" className="space-y-4">
+            {usersLoading ? (
+              <Card>
+                <CardContent className="pt-6">
+                  <p className="text-center text-muted-foreground">Loading users...</p>
+                </CardContent>
+              </Card>
+            ) : allUsers.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6">
+                  <p className="text-center text-muted-foreground">No users found</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    Total: {allUsers.length} users
+                  </p>
+                  <Button onClick={fetchUsers} variant="outline" size="sm">
+                    Refresh
+                  </Button>
+                </div>
+                <div className="grid gap-4">
+                  {allUsers.map((userProfile) => (
+                    <Card key={userProfile.id}>
+                      <CardHeader>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <CardTitle className="flex items-center gap-2">
+                              {userProfile.full_name}
+                              {userProfile.id === profile?.id && (
+                                <Badge variant="outline" className="text-xs">You</Badge>
+                              )}
+                            </CardTitle>
+                            <CardDescription>{userProfile.email}</CardDescription>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant={
+                                userProfile.role === 'admin'
+                                  ? 'default'
+                                  : userProfile.role === 'teacher'
+                                  ? 'secondary'
+                                  : 'outline'
+                              }
+                              className="capitalize"
+                            >
+                              {userProfile.role}
+                            </Badge>
+                            {userProfile.is_active === false && (
+                              <Badge variant="destructive">Inactive</Badge>
+                            )}
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center justify-between">
+                          <div className="text-sm text-muted-foreground">
+                            Joined: {format(new Date(userProfile.created_at), 'MMM d, yyyy')}
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedUser(userProfile);
+                                setNewRole(userProfile.role);
+                                setRoleDialogOpen(true);
+                              }}
+                            >
+                              <Edit className="mr-2 h-4 w-4" />
+                              Change Role
+                            </Button>
+                            <Button
+                              variant={userProfile.is_active ? 'destructive' : 'default'}
+                              size="sm"
+                              onClick={() => handleToggleUserStatus(userProfile)}
+                              disabled={userProfile.id === profile?.id}
+                            >
+                              {userProfile.is_active ? (
+                                <>
+                                  <UserX className="mr-2 h-4 w-4" />
+                                  Deactivate
+                                </>
+                              ) : (
+                                <>
+                                  <UserCheck className="mr-2 h-4 w-4" />
+                                  Activate
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      <Dialog open={!!selectedUpload} onOpenChange={() => setSelectedUpload(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Review Submission</DialogTitle>
+            <DialogDescription>
+              Add notes for this {selectedUpload?.status} decision (optional)
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="notes">Admin Notes</Label>
+              <Textarea
+                id="notes"
+                placeholder="Add any notes or feedback..."
+                value={adminNotes}
+                onChange={(e) => setAdminNotes(e.target.value)}
+                rows={4}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setSelectedUpload(null)}
+              disabled={actionLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => selectedUpload && handleReject(selectedUpload)}
+              disabled={actionLoading}
+            >
+              Reject
+            </Button>
+            <Button
+              onClick={() => selectedUpload && handleApprove(selectedUpload)}
+              disabled={actionLoading}
+            >
+              Approve & Publish
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Upload</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{uploadToDelete?.title}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={roleDialogOpen} onOpenChange={setRoleDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change User Role</DialogTitle>
+            <DialogDescription>
+              Change role for {selectedUser?.full_name} ({selectedUser?.email})
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="role">New Role</Label>
+              <Select value={newRole} onValueChange={(v) => setNewRole(v as 'student' | 'teacher' | 'admin')}>
+                <SelectTrigger id="role">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="student">Student</SelectItem>
+                  <SelectItem value="teacher">Teacher (Moderator)</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {newRole === 'teacher' && 'Teachers can approve/reject uploads'}
+                {newRole === 'admin' && 'Admins have full access including user management'}
+                {newRole === 'student' && 'Students can upload content for review'}
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRoleDialogOpen(false);
+                setSelectedUser(null);
+              }}
+              disabled={updatingRole}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleRoleChange} disabled={updatingRole || newRole === selectedUser?.role}>
+              {updatingRole ? 'Updating...' : 'Update Role'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </MainLayout>
+  );
+}

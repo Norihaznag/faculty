@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+@layer base {
+  :root {
+    /* Dark, vibrant dashboard-inspired palette (default theme) */
+    --background: 222 47% 10%; /* deep slate background */
+    --foreground: 210 40% 98%; /* near-white text */
+
+    --card: 222 47% 14%; /* slightly lighter than background */
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 16%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217 91% 60%; /* vivid blue */
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 39 100% 55%; /* warm yellow / orange */
+    --secondary-foreground: 24 100% 5%;
+
+    --muted: 220 25% 20%;
+    --muted-foreground: 220 15% 70%;
+
+    --accent: 199 89% 48%; /* cyan accent */
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 25% 25%;
+    --input: 220 25% 25%;
+    --ring: 217 91% 60%;
+
+    /* Bright chart colors to mimic colorful tiles */
+    --chart-1: 204 94% 68%; /* sky */
+    --chart-2: 39 100% 55%; /* amber */
+    --chart-3: 0 84% 60%; /* red */
+    --chart-4: 142 72% 45%; /* green */
+    --chart-5: 271 91% 65%; /* purple */
+    --radius: 0.5rem;
+  }
+  .dark {
+    /* Keep dark mode very similar, just a touch deeper */
+    --background: 222 47% 6%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 12%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 14%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 39 100% 55%;
+    --secondary-foreground: 24 100% 5%;
+
+    --muted: 220 25% 18%;
+    --muted-foreground: 220 15% 70%;
+
+    --accent: 199 89% 48%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 84% 58%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 25% 22%;
+    --input: 220 25% 22%;
+    --ring: 217 91% 60%;
+
+    --chart-1: 204 94% 68%;
+    --chart-2: 39 100% 55%;
+    --chart-3: 0 84% 60%;
+    --chart-4: 142 72% 45%;
+    --chart-5: 271 91% 65%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
