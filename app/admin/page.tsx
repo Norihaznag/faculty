@@ -49,13 +49,13 @@ export default function AdminPage() {
   const [usersLoading, setUsersLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
-  const [newRole, setNewRole] = useState<'student' | 'teacher' | 'admin'>('student');
+  const [newRole, setNewRole] = useState<'student' | 'teacher' | 'moderator' | 'admin'>('student');
   const [updatingRole, setUpdatingRole] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && (!user || (profile?.role !== 'admin' && profile?.role !== 'teacher'))) {
+    if (!authLoading && (!user || (profile?.role !== 'admin' && profile?.role !== 'moderator'))) {
       router.push('/');
-    } else if (profile?.role === 'admin' || profile?.role === 'teacher') {
+    } else if (profile?.role === 'admin' || profile?.role === 'moderator') {
       fetchData();
       if (profile?.role === 'admin') {
         fetchUsers();
@@ -291,7 +291,7 @@ export default function AdminPage() {
     );
   }
 
-  if (profile?.role !== 'admin' && profile?.role !== 'teacher') {
+  if (profile?.role !== 'admin' && profile?.role !== 'moderator') {
     return null;
   }
 
@@ -634,8 +634,10 @@ export default function AdminPage() {
                               variant={
                                 userProfile.role === 'admin'
                                   ? 'default'
-                                  : userProfile.role === 'teacher'
+                                  : userProfile.role === 'moderator'
                                   ? 'secondary'
+                                  : userProfile.role === 'teacher'
+                                  ? 'outline'
                                   : 'outline'
                               }
                               className="capitalize"
@@ -776,18 +778,20 @@ export default function AdminPage() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="role">New Role</Label>
-              <Select value={newRole} onValueChange={(v) => setNewRole(v as 'student' | 'teacher' | 'admin')}>
+              <Select value={newRole} onValueChange={(v) => setNewRole(v as 'student' | 'teacher' | 'moderator' | 'admin')}>
                 <SelectTrigger id="role">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="student">Student</SelectItem>
-                  <SelectItem value="teacher">Teacher (Moderator)</SelectItem>
+                  <SelectItem value="teacher">Teacher</SelectItem>
+                  <SelectItem value="moderator">Moderator</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                {newRole === 'teacher' && 'Teachers can approve/reject uploads'}
+                {newRole === 'moderator' && 'Moderators can approve/reject/delete uploads'}
+                {newRole === 'teacher' && 'Teachers can create lessons'}
                 {newRole === 'admin' && 'Admins have full access including user management'}
                 {newRole === 'student' && 'Students can upload content for review'}
               </p>

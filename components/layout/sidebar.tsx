@@ -17,7 +17,7 @@ type SidebarProps = {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const { isAdmin, isTeacher } = useAuth();
+  const { isAdmin, isModerator } = useAuth();
   type SidebarLesson = { id: string; title: string; slug: string };
 
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -110,7 +110,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <ScrollArea className="h-[calc(100vh-4rem)]">
           <div className="p-4 space-y-2">
             {navItems
-              .filter((item) => !item.adminOnly || isAdmin || isTeacher)
+              .filter((item) => !item.adminOnly || isAdmin || isModerator)
               .map((item) => (
                 <Link
                   key={item.href}

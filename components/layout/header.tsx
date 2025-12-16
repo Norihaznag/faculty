@@ -63,7 +63,7 @@ export function Header({ onMenuClick }: HeaderProps) {
       const [lessonsRes, subjectsRes] = await Promise.all([
         supabase
           .from('lessons')
-          .select('id, title, slug, subject:subjects(name)')
+          .select('id, title, slug, subject:subjects!inner(name)')
           .eq('is_published', true)
           .or(`title.ilike.%${query}%,content.ilike.%${query}%`)
           .order('views', { ascending: false })
@@ -76,8 +76,16 @@ export function Header({ onMenuClick }: HeaderProps) {
           .limit(5),
       ]);
 
+      // Transform lessons to ensure subject is properly typed
+      const lessons = (lessonsRes.data || []).map((lesson: any) => ({
+        id: lesson.id,
+        title: lesson.title,
+        slug: lesson.slug,
+        subject: Array.isArray(lesson.subject) ? lesson.subject[0] : lesson.subject,
+      }));
+
       setSuggestions({
-        lessons: lessonsRes.data || [],
+        lessons: lessons,
         subjects: subjectsRes.data || [],
       });
       setShowSuggestions(true);

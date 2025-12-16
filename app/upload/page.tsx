@@ -74,9 +74,9 @@ export default function UploadPage() {
     }
 
     // Prepare content based on type
-    let finalContent = '';
-    let pdfUrl = null;
-    let externalLink = null;
+    let finalContent: string | null = null;
+    let pdfUrl: string | null = null;
+    let externalLink: string | null = null;
 
     if (contentType === 'text') {
       finalContent = content.trim() || null;
