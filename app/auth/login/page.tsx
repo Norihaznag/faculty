@@ -90,6 +90,11 @@ export default function LoginPage() {
               </Button>
             </form>
 
+            <p className="mt-4 text-xs text-muted-foreground">
+              If you just registered, please confirm your email using the link we sent before
+              trying to sign in.
+            </p>
+
             <div className="mt-4 text-center text-sm">
               <span className="text-muted-foreground">Don&apos;t have an account? </span>
               <Link href="/auth/signup" className="text-primary hover:underline">

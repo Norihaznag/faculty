@@ -41,9 +41,7 @@ export default function SignUpPage() {
       setLoading(false);
     } else {
       setSuccess(true);
-      setTimeout(() => {
-        router.push('/');
-      }, 2000);
+      setLoading(false);
     }
   };
 
@@ -52,11 +50,21 @@ export default function SignUpPage() {
       <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle>Account Created!</CardTitle>
+            <CardTitle>Check your email</CardTitle>
             <CardDescription>
-              Your account has been successfully created. Redirecting...
+              We&apos;ve sent a confirmation link to{' '}
+              <span className="font-medium">{email}</span>. Please click the link in that email to
+              activate your account before signing in.
             </CardDescription>
           </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              If you don&apos;t see the email, please check your spam or junk folder.
+            </p>
+            <Button asChild className="w-full">
+              <Link href="/auth/login">Go to Sign In</Link>
+            </Button>
+          </CardContent>
         </Card>
       </div>
     );
@@ -76,7 +84,8 @@ export default function SignUpPage() {
           <CardHeader>
             <CardTitle>Create Account</CardTitle>
             <CardDescription>
-              Sign up to start accessing and sharing educational content
+              Sign up to start accessing and sharing educational content. After registering, we&apos;ll
+              send you a link to confirm your email and activate your account.
             </CardDescription>
           </CardHeader>
           <CardContent>
