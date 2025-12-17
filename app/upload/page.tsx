@@ -36,6 +36,11 @@ export default function UploadPage() {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [advancedMode, setAdvancedMode] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState('');
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [seoTitle, setSeoTitle] = useState('');
+  const [metaDescription, setMetaDescription] = useState('');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -59,6 +64,7 @@ export default function UploadPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setAiError('');
     setLoading(true);
 
     if (!title.trim()) {
@@ -122,9 +128,9 @@ export default function UploadPage() {
         return;
       }
 
-      const slug = slugify(title.trim());
+      const slug = slugify((seoTitle || title).trim());
       const { error: lessonError } = await supabase.from('lessons').insert({
-        title: title.trim(),
+        title: seoTitle.trim() || title.trim(),
         slug: slug,
         content: finalContent,
         subject_id: finalSubjectId,
@@ -147,6 +153,8 @@ export default function UploadPage() {
         setSuggestedSubjectName('');
         setSemester('');
         setTags('');
+        setSeoTitle('');
+        setMetaDescription('');
         setLoading(false);
 
         setTimeout(() => {
@@ -156,7 +164,7 @@ export default function UploadPage() {
     } else {
       // Regular users: create upload for review
       const uploadData: any = {
-        title: title.trim(),
+        title: seoTitle.trim() || title.trim(),
         content: finalContent,
         pdf_url: pdfUrl,
         external_link: externalLink,
@@ -186,12 +194,60 @@ export default function UploadPage() {
         setSuggestedSubjectName('');
         setSemester('');
         setTags('');
+        setSeoTitle('');
+        setMetaDescription('');
         setLoading(false);
 
         setTimeout(() => {
           setSuccess(false);
         }, 5000);
       }
+    }
+  };
+
+  const handleAiFromFile = async () => {
+    if (!uploadFile) {
+      setAiError('Please choose a .txt or .docx file first');
+      return;
+    }
+
+    setAiError('');
+    setAiLoading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', uploadFile);
+
+      const res = await fetch('/api/ai/analyze-upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.error || 'Failed to analyze file');
+      }
+
+      if (data.snippet && typeof data.snippet === 'string' && !content) {
+        setContent(data.snippet);
+      }
+
+      if (Array.isArray(data.tags) && data.tags.length > 0) {
+        setTags(data.tags.join(', '));
+      }
+
+      if (data.seoTitle && !seoTitle) {
+        setSeoTitle(data.seoTitle);
+      }
+
+      if (data.metaDescription && !metaDescription) {
+        setMetaDescription(data.metaDescription);
+      }
+    } catch (err: any) {
+      setAiError(err?.message || 'Failed to analyze file with AI');
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -259,6 +315,12 @@ export default function UploadPage() {
                 </Alert>
               )}
 
+              {aiError && (
+                <Alert variant="destructive">
+                  <AlertDescription>{aiError}</AlertDescription>
+                </Alert>
+              )}
+
               {success && (
                 <Alert>
                   <CheckCircle className="h-4 w-4" />
@@ -292,6 +354,33 @@ export default function UploadPage() {
                   className="text-base"
                 />
               </div>
+
+              {advancedMode && (
+                <div className="space-y-2">
+                  <Label htmlFor="seoTitle">SEO Title (Optional, AI suggested)</Label>
+                  <Input
+                    id="seoTitle"
+                    type="text"
+                    placeholder="Short, search-friendly title"
+                    value={seoTitle}
+                    onChange={(e) => setSeoTitle(e.target.value)}
+                    disabled={loading}
+                    className="text-base"
+                  />
+                  <Label htmlFor="metaDescription" className="mt-2 block">
+                    Meta Description (Optional, AI suggested)
+                  </Label>
+                  <Textarea
+                    id="metaDescription"
+                    placeholder="Short summary that will show in search results."
+                    value={metaDescription}
+                    onChange={(e) => setMetaDescription(e.target.value)}
+                    disabled={loading}
+                    rows={3}
+                    className="text-base"
+                  />
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="subject">Subject *</Label>
@@ -423,19 +512,46 @@ export default function UploadPage() {
                   )}
                 </div>
                 {contentType === 'text' ? (
-                  <Textarea
-                    id="content"
-                    placeholder={
-                      advancedMode
-                        ? 'Write or paste the lesson content here. You can use HTML for formatting.'
-                        : 'Paste your content here...'
-                    }
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    rows={advancedMode ? 8 : 6}
-                    disabled={loading}
-                    className="text-base"
-                  />
+                  <>
+                    <Textarea
+                      id="content"
+                      placeholder={
+                        advancedMode
+                          ? 'Write or paste the lesson content here. You can use HTML for formatting.'
+                          : 'Paste your content here...'
+                      }
+                      value={content}
+                      onChange={(e) => setContent(e.target.value)}
+                      rows={advancedMode ? 8 : 6}
+                      disabled={loading}
+                      className="text-base"
+                    />
+                    <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <Input
+                        type="file"
+                        accept=".txt,.md,.docx"
+                        disabled={loading || aiLoading}
+                        onChange={(e) => {
+                          setUploadFile(e.target.files?.[0] || null);
+                          setAiError('');
+                        }}
+                        className="text-sm"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleAiFromFile}
+                        disabled={aiLoading || !uploadFile}
+                        className="mt-2 sm:mt-0"
+                      >
+                        {aiLoading ? 'Analyzing with AI...' : 'Generate tags & SEO from file'}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Upload a .txt or .docx file and let AI suggest tags and SEO fields for you.
+                    </p>
+                  </>
                 ) : (
                   <Input
                     id="content"
