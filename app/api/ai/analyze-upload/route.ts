@@ -7,102 +7,135 @@ type AiResponse = {
   metaDescription: string;
 };
 
-async function callAiForSeo(text: string): Promise<AiResponse> {
-  const apiKey = process.env.HF_API_KEY;
-  const model = process.env.HF_MODEL || 'mistralai/Mixtral-8x7B-Instruct-v0.1';
+// Common stop words to filter out
+const STOP_WORDS = new Set([
+  'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by',
+  'from', 'as', 'is', 'was', 'are', 'were', 'been', 'be', 'have', 'has', 'had', 'do', 'does',
+  'did', 'will', 'would', 'should', 'could', 'may', 'might', 'must', 'can', 'this', 'that',
+  'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'what', 'which', 'who',
+  'when', 'where', 'why', 'how', 'all', 'each', 'every', 'both', 'few', 'more', 'most',
+  'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too',
+  'very', 'just', 'now', 'then', 'here', 'there', 'about', 'above', 'below', 'up', 'down',
+  'out', 'off', 'over', 'under', 'again', 'further', 'once', 'also', 'back', 'well', 'even',
+]);
 
-  // Simple non-AI fallback if no key is configured
-  if (!apiKey) {
-    const words = text
-      .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, ' ')
-      .split(/\s+/)
-      .filter(Boolean);
+// Common educational/technical terms that should be prioritized
+const EDUCATIONAL_TERMS = new Set([
+  'introduction', 'tutorial', 'guide', 'lesson', 'course', 'example', 'practice', 'exercise',
+  'concept', 'theory', 'principle', 'method', 'technique', 'algorithm', 'function', 'variable',
+  'class', 'object', 'array', 'string', 'number', 'boolean', 'loop', 'condition', 'statement',
+  'programming', 'development', 'coding', 'software', 'application', 'framework', 'library',
+  'database', 'server', 'client', 'api', 'http', 'html', 'css', 'javascript', 'python', 'java',
+  'react', 'node', 'express', 'sql', 'mongodb', 'git', 'github', 'deployment', 'testing',
+]);
 
-    const freq: Record<string, number> = {};
-    for (const w of words) {
-      if (w.length < 4) continue;
-      freq[w] = (freq[w] || 0) + 1;
+function extractSmartTags(text: string): string[] {
+  // Normalize text: lowercase, remove special chars, split into words
+  const words = text
+    .toLowerCase()
+    .replace(/[^\w\s]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+
+  // Count word frequencies, prioritizing longer and educational terms
+  const freq: Record<string, number> = {};
+  for (let i = 0; i < words.length; i++) {
+    const word = words[i];
+    
+    // Skip stop words and very short words
+    if (STOP_WORDS.has(word) || word.length < 3) continue;
+    
+    // Boost score for educational terms
+    let score = 1;
+    if (EDUCATIONAL_TERMS.has(word)) score += 2;
+    if (word.length >= 6) score += 1; // Prefer longer, more specific words
+    
+    freq[word] = (freq[word] || 0) + score;
+    
+    // Also consider bigrams (two-word phrases)
+    if (i < words.length - 1) {
+      const nextWord = words[i + 1];
+      if (!STOP_WORDS.has(nextWord) && nextWord.length >= 3) {
+        const bigram = `${word} ${nextWord}`;
+        freq[bigram] = (freq[bigram] || 0) + 1.5;
+      }
     }
-
-    const tags = Object.entries(freq)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 8)
-      .map(([w]) => w);
-
-    const trimmed = text.trim().slice(0, 160).replace(/\s+/g, ' ');
-
-    return {
-      tags,
-      seoTitle: trimmed.slice(0, 60) || 'Lesson',
-      metaDescription: trimmed || 'Educational resource.',
-    };
   }
 
-  const prompt = `
-You are an SEO assistant. Given the following educational content, extract:
-- 5 to 10 short, lowercase SEO tags (single or double-word phrases)
-- One concise SEO title (max 60 characters)
-- One meta description (max 155 characters)
+  // Get top tags, preferring educational terms
+  const tags = Object.entries(freq)
+    .sort((a, b) => {
+      // Sort by frequency first
+      if (b[1] !== a[1]) return b[1] - a[1];
+      // Then by length (prefer longer, more specific terms)
+      return b[0].length - a[0].length;
+    })
+    .slice(0, 10)
+    .map(([word]) => word);
 
-Return ONLY valid JSON in this exact shape:
-{
-  "tags": ["tag1", "tag2"],
-  "seoTitle": "Title here",
-  "metaDescription": "Description here"
+  return tags;
 }
 
-Content:
----
-${text.slice(0, 8000)}
----
-`;
-
-  const res = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      inputs: prompt,
-      parameters: {
-        max_new_tokens: 512,
-        temperature: 0.4,
-      },
-    }),
-  });
-
-  if (!res.ok) {
-    throw new Error(`AI request failed with status ${res.status}`);
+function extractSeoTitle(text: string): string {
+  // Try to find the first sentence or first line
+  const firstLine = text.split('\n')[0].trim();
+  const firstSentence = firstLine.split(/[.!?]/)[0].trim();
+  
+  // Use first sentence if it's reasonable length, otherwise first line
+  let title = firstSentence.length > 10 && firstSentence.length <= 60 
+    ? firstSentence 
+    : firstLine;
+  
+  // Clean up and truncate
+  title = title.replace(/\s+/g, ' ').slice(0, 60);
+  
+  // If title is too short, try to create one from first few words
+  if (title.length < 10) {
+    const words = text.split(/\s+/).slice(0, 8).join(' ');
+    title = words.slice(0, 60);
   }
+  
+  return title || 'Educational Lesson';
+}
 
-  const data = await res.json();
-
-  const rawText: string =
-    typeof data === 'string'
-      ? data
-      : Array.isArray(data) && data.length > 0 && typeof data[0].generated_text === 'string'
-      ? data[0].generated_text
-      : JSON.stringify(data);
-
-  // Try to extract JSON from the model output
-  const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
-    throw new Error('AI response did not contain JSON');
+function extractMetaDescription(text: string): string {
+  // Try to find a good description: first paragraph or first few sentences
+  const paragraphs = text.split(/\n\n+/).filter(p => p.trim().length > 20);
+  
+  let description = '';
+  if (paragraphs.length > 0) {
+    description = paragraphs[0].trim();
+  } else {
+    // Fallback: first few sentences
+    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 20);
+    description = sentences.slice(0, 2).join('. ').trim();
   }
-
-  let parsed: AiResponse;
-  try {
-    parsed = JSON.parse(jsonMatch[0]);
-  } catch {
-    throw new Error('Failed to parse AI JSON');
+  
+  // Clean up and truncate to 155 characters
+  description = description
+    .replace(/\s+/g, ' ')
+    .replace(/[^\w\s.,!?-]/g, '')
+    .slice(0, 155)
+    .trim();
+  
+  // Ensure it ends properly
+  if (description.length > 150 && !description.match(/[.!?]$/)) {
+    description = description.slice(0, 152) + '...';
   }
+  
+  return description || 'Educational content and learning resource.';
+}
+
+async function analyzeTextForSeo(text: string): Promise<AiResponse> {
+  // Simple, free text analysis - no API keys needed!
+  const tags = extractSmartTags(text);
+  const seoTitle = extractSeoTitle(text);
+  const metaDescription = extractMetaDescription(text);
 
   return {
-    tags: Array.isArray(parsed.tags) ? parsed.tags.map(String) : [],
-    seoTitle: String(parsed.seoTitle || '').slice(0, 60),
-    metaDescription: String(parsed.metaDescription || '').slice(0, 155),
+    tags,
+    seoTitle,
+    metaDescription,
   };
 }
 
@@ -137,7 +170,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Could not extract text from file' }, { status: 400 });
     }
 
-    const ai = await callAiForSeo(text);
+    const ai = await analyzeTextForSeo(text);
 
     return NextResponse.json(
       {
