@@ -126,17 +126,117 @@ function extractMetaDescription(text: string): string {
   return description || 'Educational content and learning resource.';
 }
 
-async function analyzeTextForSeo(text: string): Promise<AiResponse> {
-  // Simple, free text analysis - no API keys needed!
-  const tags = extractSmartTags(text);
-  const seoTitle = extractSeoTitle(text);
-  const metaDescription = extractMetaDescription(text);
+async function callFreeAI(text: string): Promise<AiResponse> {
+  // Use Hugging Face's FREE Inference API - No API key required!
+  // Public models available without authentication (rate-limited but free)
+  // Using a fast, small model: microsoft/Phi-3-mini-4k-instruct
+  const model = 'microsoft/Phi-3-mini-4k-instruct';
+  
+  const prompt = `Extract SEO information from this educational content. Return ONLY valid JSON:
+{
+  "tags": ["tag1", "tag2"],
+  "seoTitle": "Short title",
+  "metaDescription": "Brief description"
+}
 
+Content: ${text.slice(0, 2000)}`;
+
+  try {
+    const response = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        inputs: prompt,
+        parameters: {
+          max_new_tokens: 200,
+          temperature: 0.3,
+          return_full_text: false,
+        },
+      }),
+    });
+
+    // Handle rate limiting or model loading
+    if (response.status === 503) {
+      // Model is loading, wait a bit and retry once
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      const retryResponse = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          inputs: prompt,
+          parameters: { max_new_tokens: 200, temperature: 0.3, return_full_text: false },
+        }),
+      });
+      
+      if (!retryResponse.ok) {
+        throw new Error('AI model unavailable');
+      }
+      
+      const retryData = await retryResponse.json();
+      return parseAIResponse(retryData, text);
+    }
+
+    if (!response.ok) {
+      throw new Error(`AI API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return parseAIResponse(data, text);
+  } catch (error: any) {
+    // Fallback to simple text analysis if AI fails
+    console.log('Free AI API unavailable, using smart fallback:', error?.message || error);
+    return {
+      tags: extractSmartTags(text),
+      seoTitle: extractSeoTitle(text),
+      metaDescription: extractMetaDescription(text),
+    };
+  }
+}
+
+function parseAIResponse(data: any, fallbackText: string): AiResponse {
+  // Extract generated text from various response formats
+  let generatedText = '';
+  
+  if (Array.isArray(data) && data[0]?.generated_text) {
+    generatedText = data[0].generated_text;
+  } else if (typeof data === 'string') {
+    generatedText = data;
+  } else if (data?.generated_text) {
+    generatedText = data.generated_text;
+  } else if (data?.[0]?.generated_text) {
+    generatedText = data[0].generated_text;
+  }
+
+  // Try to extract JSON from the response
+  const jsonMatch = generatedText.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    try {
+      const parsed = JSON.parse(jsonMatch[0]);
+      return {
+        tags: Array.isArray(parsed.tags) 
+          ? parsed.tags.slice(0, 10).map(String).filter((t: string) => t.length > 0 && t.length < 30)
+          : extractSmartTags(fallbackText),
+        seoTitle: String(parsed.seoTitle || '').slice(0, 60).trim() || extractSeoTitle(fallbackText),
+        metaDescription: String(parsed.metaDescription || '').slice(0, 155).trim() || extractMetaDescription(fallbackText),
+      };
+    } catch {
+      // JSON parse failed, use fallback
+    }
+  }
+  
+  // If we can't parse, use fallback
   return {
-    tags,
-    seoTitle,
-    metaDescription,
+    tags: extractSmartTags(fallbackText),
+    seoTitle: extractSeoTitle(fallbackText),
+    metaDescription: extractMetaDescription(fallbackText),
   };
+}
+
+async function analyzeTextForSeo(text: string): Promise<AiResponse> {
+  // Try free AI first, fallback to simple analysis if it fails
+  return await callFreeAI(text);
 }
 
 async function extractTextFromFile(file: File): Promise<string> {
