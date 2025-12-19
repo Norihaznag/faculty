@@ -13,9 +13,10 @@ import { useAuth } from '@/lib/auth-context';
 type SidebarProps = {
   isOpen: boolean;
   onClose: () => void;
+  isMobile?: boolean;
 };
 
-export function Sidebar({ isOpen, onClose }: SidebarProps) {
+export function Sidebar({ isOpen, onClose, isMobile = false }: SidebarProps) {
   const pathname = usePathname();
   const { isAdmin, isModerator } = useAuth();
   type SidebarLesson = { id: string; title: string; slug: string };
@@ -76,6 +77,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   return (
     <>
+      {/* Overlay only on mobile */}
       <div
         className={cn(
           'fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity',
@@ -86,13 +88,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       <aside
         className={cn(
-          'fixed top-0 left-0 h-full w-72 bg-background border-r z-50 transition-transform duration-300 ease-in-out',
-          'lg:translate-x-0',
+          'fixed top-0 left-0 h-full w-72 bg-white border-r border-border/40 z-50 transition-transform duration-200 ease-out',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        <div className="flex items-center justify-between h-16 px-6 border-b">
-          <Link href="/" className="flex items-center space-x-2" onClick={onClose}>
+        <div className="flex items-center justify-between h-14 px-4 border-b border-border/40">
+          <Link href="/" className="flex items-center space-x-2" onClick={isMobile ? onClose : undefined}>
             <BookOpen className="h-6 w-6" />
             <span className="font-bold text-lg">EduHub</span>
           </Link>
@@ -100,27 +101,26 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="lg:hidden"
             aria-label="Close sidebar"
           >
             <X className="h-5 w-5" />
           </Button>
         </div>
 
-        <ScrollArea className="h-[calc(100vh-4rem)]">
-          <div className="p-4 space-y-2">
+        <ScrollArea className="h-[calc(100vh-3.5rem)] smooth-scroll">
+          <div className="p-3 space-y-1">
             {navItems
               .filter((item) => !item.adminOnly || isAdmin || isModerator)
               .map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={onClose}
+                  onClick={isMobile ? onClose : undefined}
                   className={cn(
-                    'flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors',
+                    'flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors active:scale-[0.98]',
                     pathname === item.href
-                      ? 'bg-primary text-primary-foreground'
-                      : 'hover:bg-accent'
+                      ? 'bg-primary text-white font-medium'
+                      : 'hover:bg-muted/50 active:bg-muted'
                   )}
                 >
                   <item.icon className="h-5 w-5" />
@@ -128,7 +128,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 </Link>
               ))}
 
-            <div className="pt-4 pb-2">
+            <div className="pt-3 pb-1.5">
               <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Subjects
               </h3>
@@ -138,7 +138,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               <div key={subject.id}>
                 <button
                   onClick={() => toggleSubject(subject.id)}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-accent transition-colors text-left"
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-muted/50 active:bg-muted transition-colors text-left active:scale-[0.98]"
                 >
                   <span className="font-medium">{subject.name}</span>
                   <ChevronRight
@@ -155,12 +155,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                       <Link
                         key={lesson.id}
                         href={`/lessons/${lesson.slug}`}
-                        onClick={onClose}
+                        onClick={isMobile ? onClose : undefined}
                         className={cn(
-                          'block px-3 py-1.5 text-sm rounded-md transition-colors',
+                          'block px-3 py-1.5 text-sm rounded-md transition-colors active:scale-[0.98]',
                           pathname === `/lessons/${lesson.slug}`
-                            ? 'bg-accent text-accent-foreground'
-                            : 'hover:bg-accent/50'
+                            ? 'bg-primary/10 text-primary font-medium'
+                            : 'hover:bg-muted/50 active:bg-muted'
                         )}
                       >
                         {lesson.title}
@@ -168,7 +168,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     ))}
                     <Link
                       href={`/subjects/${subject.slug}`}
-                      onClick={onClose}
+                      onClick={isMobile ? onClose : undefined}
                       className="block px-3 py-1.5 text-sm text-primary hover:underline"
                     >
                       View all →

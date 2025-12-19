@@ -18,9 +18,10 @@ import { supabase } from '@/lib/supabase';
 
 type HeaderProps = {
   onMenuClick: () => void;
+  sidebarOpen?: boolean;
 };
 
-export function Header({ onMenuClick }: HeaderProps) {
+export function Header({ onMenuClick, sidebarOpen = false }: HeaderProps) {
   const router = useRouter();
   const { user, profile, signOut } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
@@ -108,19 +109,17 @@ export function Header({ onMenuClick }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-30 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-16 items-center px-4 gap-4">
+    <header className="sticky top-0 z-30 w-full border-b border-border/40 bg-white/95 backdrop-blur-sm supports-[backdrop-filter]:bg-white/80">
+      <div className="flex h-14 items-center px-4 gap-3">
         <Button
           variant="ghost"
           size="icon"
           onClick={onMenuClick}
-          className="lg:hidden"
-          aria-label="Toggle menu"
+          aria-label="Toggle sidebar"
+          className="shrink-0"
         >
           <Menu className="h-5 w-5" />
         </Button>
-
-        <div className="hidden lg:block w-8" />
 
         <div className="flex-1 max-w-2xl relative">
           <form onSubmit={handleSearch}>
@@ -134,15 +133,15 @@ export function Header({ onMenuClick }: HeaderProps) {
                 onFocus={() => {
                   if (searchQuery.trim()) setShowSuggestions(true);
                 }}
-                className="pl-9 w-full"
+                className="pl-9 w-full bg-white border-border/60 focus:border-primary/50 focus:ring-1"
                 aria-label="Search"
               />
             </div>
           </form>
 
           {showSuggestions && (suggestions.lessons.length > 0 || suggestions.subjects.length > 0 || loadingSuggestions) && (
-            <div className="absolute mt-2 w-full rounded-md border bg-popover shadow-lg z-50">
-              <div className="p-2 space-y-1 max-h-80 overflow-y-auto">
+            <div className="absolute mt-1 w-full rounded-lg border border-border/60 bg-white shadow-sm z-50">
+              <div className="p-1 space-y-0.5 max-h-80 overflow-y-auto smooth-scroll">
                 {loadingSuggestions && (
                   <p className="text-xs text-muted-foreground px-2 py-1">Loading...</p>
                 )}
@@ -157,7 +156,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                         key={lesson.id}
                         type="button"
                         onClick={() => handleSelectLesson(lesson.slug)}
-                        className="w-full text-left px-2 py-1.5 rounded-md hover:bg-accent transition-colors"
+                        className="w-full text-left px-3 py-2 rounded-md hover:bg-muted/50 transition-colors active:bg-muted"
                       >
                         <div className="text-sm font-medium">{lesson.title}</div>
                         <div className="text-xs text-muted-foreground">
@@ -178,7 +177,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                         key={subject.id}
                         type="button"
                         onClick={() => handleSelectSubject(subject.slug)}
-                        className="w-full text-left px-2 py-1.5 rounded-md hover:bg-accent transition-colors"
+                        className="w-full text-left px-3 py-2 rounded-md hover:bg-muted/50 transition-colors active:bg-muted"
                       >
                         <div className="text-sm font-medium">{subject.name}</div>
                         <div className="text-xs text-muted-foreground">Subject</div>
