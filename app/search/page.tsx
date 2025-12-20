@@ -26,19 +26,24 @@ export default function SearchPage() {
   const searchLessons = async () => {
     setLoading(true);
 
-    const { data } = await supabase
-      .from('lessons')
-      .select('*, subject:subjects(*)')
-      .eq('is_published', true)
-      .or(`title.ilike.%${query}%,content.ilike.%${query}%`)
-      .order('views', { ascending: false })
-      .limit(50);
+    try {
+      const { data, error } = await supabase
+        .from('lessons')
+        .select('*, subject:subjects(*)')
+        .eq('is_published', true)
+        .or(`title.ilike.%${query}%,content.ilike.%${query}%`)
+        .order('views', { ascending: false })
+        .limit(50);
 
-    if (data) {
-      setLessons(data);
+      if (error) throw error;
+
+      setLessons(data || []);
+    } catch (error) {
+      console.error('Search error:', error);
+      setLessons([]);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (

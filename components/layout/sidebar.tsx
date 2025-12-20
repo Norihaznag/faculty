@@ -30,29 +30,40 @@ export function Sidebar({ isOpen, onClose, isMobile = false }: SidebarProps) {
   }, []);
 
   const fetchSubjects = async () => {
-    const { data, error } = await supabase
-      .from('subjects')
-      .select('*')
-      .order('order_index');
+    try {
+      const { data, error } = await supabase
+        .from('subjects')
+        .select('*')
+        .order('order_index');
 
-    if (data) {
-      setSubjects(data);
+      if (error) throw error;
+      if (data) {
+        setSubjects(data);
+      }
+    } catch (error) {
+      console.error('Error fetching subjects:', error);
     }
   };
 
   const fetchLessonsForSubject = async (subjectId: string) => {
     if (lessonsMap[subjectId]) return;
 
-    const { data } = await supabase
-      .from('lessons')
-      .select('id, title, slug')
-      .eq('subject_id', subjectId)
-      .eq('is_published', true)
-      .order('created_at', { ascending: false })
-      .limit(10);
+    try {
+      const { data, error } = await supabase
+        .from('lessons')
+        .select('id, title, slug')
+        .eq('subject_id', subjectId)
+        .eq('is_published', true)
+        .order('created_at', { ascending: false })
+        .limit(10);
 
-    if (data) {
-      setLessonsMap(prev => ({ ...prev, [subjectId]: data }));
+      if (error) throw error;
+
+      if (data) {
+        setLessonsMap(prev => ({ ...prev, [subjectId]: data }));
+      }
+    } catch (error) {
+      console.error('Error fetching lessons for subject:', error);
     }
   };
 

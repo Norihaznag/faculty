@@ -57,41 +57,51 @@ export function Header({ onMenuClick, sidebarOpen = false }: HeaderProps) {
       return;
     }
 
+    setLoadingSuggestions(true);
+
     debounceRef.current = setTimeout(async () => {
-      setLoadingSuggestions(true);
-      const query = searchQuery.trim();
+      try {
+        const query = searchQuery.trim();
 
-      const [lessonsRes, subjectsRes] = await Promise.all([
-        supabase
-          .from('lessons')
-          .select('id, title, slug, subject:subjects!inner(name)')
-          .eq('is_published', true)
-          .or(`title.ilike.%${query}%,content.ilike.%${query}%`)
-          .order('views', { ascending: false })
-          .limit(5),
-        supabase
-          .from('subjects')
-          .select('id, name, slug')
-          .ilike('name', `%${query}%`)
-          .order('order_index')
-          .limit(5),
-      ]);
+        const [lessonsRes, subjectsRes] = await Promise.all([
+          supabase
+            .from('lessons')
+            .select('id, title, slug, subject:subjects!inner(name)')
+            .eq('is_published', true)
+            .or(`title.ilike.%${query}%,content.ilike.%${query}%`)
+            .order('views', { ascending: false })
+            .limit(5),
+          supabase
+            .from('subjects')
+            .select('id, name, slug')
+            .ilike('name', `%${query}%`)
+            .order('order_index')
+            .limit(5),
+        ]);
 
-      // Transform lessons to ensure subject is properly typed
-      const lessons = (lessonsRes.data || []).map((lesson: any) => ({
-        id: lesson.id,
-        title: lesson.title,
-        slug: lesson.slug,
-        subject: Array.isArray(lesson.subject) ? lesson.subject[0] : lesson.subject,
-      }));
+        if (lessonsRes.error) throw lessonsRes.error;
+        if (subjectsRes.error) throw subjectsRes.error;
 
-      setSuggestions({
-        lessons: lessons,
-        subjects: subjectsRes.data || [],
-      });
-      setShowSuggestions(true);
-      setLoadingSuggestions(false);
-    }, 200);
+        // Transform lessons to ensure subject is properly typed
+        const lessons = (lessonsRes.data || []).map((lesson: any) => ({
+          id: lesson.id,
+          title: lesson.title,
+          slug: lesson.slug,
+          subject: Array.isArray(lesson.subject) ? lesson.subject[0] : lesson.subject,
+        }));
+
+        setSuggestions({
+          lessons: lessons,
+          subjects: subjectsRes.data || [],
+        });
+        setShowSuggestions(true);
+      } catch (error) {
+        console.error('Search error:', error);
+        setSuggestions({ lessons: [], subjects: [] });
+      } finally {
+        setLoadingSuggestions(false);
+      }
+    }, 300);
 
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);

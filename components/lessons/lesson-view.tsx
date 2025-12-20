@@ -22,10 +22,12 @@ export function LessonView({ lesson }: LessonViewProps) {
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
 
   useEffect(() => {
-    if (user) {
+    if (user?.id) {
       checkBookmark();
+    } else {
+      setIsBookmarked(false);
     }
-  }, [user, lesson.id]);
+  }, [user?.id, lesson.id]);
 
   const checkBookmark = async () => {
     if (!user) return;
@@ -45,21 +47,29 @@ export function LessonView({ lesson }: LessonViewProps) {
 
     setBookmarkLoading(true);
 
-    if (isBookmarked) {
-      await supabase
-        .from('bookmarks')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('lesson_id', lesson.id);
-      setIsBookmarked(false);
-    } else {
-      await supabase
-        .from('bookmarks')
-        .insert({ user_id: user.id, lesson_id: lesson.id });
-      setIsBookmarked(true);
+    try {
+      if (isBookmarked) {
+        const { error } = await supabase
+          .from('bookmarks')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('lesson_id', lesson.id);
+        
+        if (error) throw error;
+        setIsBookmarked(false);
+      } else {
+        const { error } = await supabase
+          .from('bookmarks')
+          .insert({ user_id: user.id, lesson_id: lesson.id });
+        
+        if (error) throw error;
+        setIsBookmarked(true);
+      }
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+    } finally {
+      setBookmarkLoading(false);
     }
-
-    setBookmarkLoading(false);
   };
 
   return (
