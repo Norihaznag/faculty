@@ -39,7 +39,47 @@
     --chart-4: 271 91% 65%;
     --chart-5: 199 89% 48%;
     --radius: 0.5rem;
+
+    color-scheme: light;
   }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: light dark;
+    }
+
+    .dark {
+      /* Optional dark mode - kept minimal */
+      --background: 0 0% 3.9%;
+      --foreground: 0 0% 98%;
+
+      --card: 0 0% 3.9%;
+      --card-foreground: 0 0% 98%;
+
+      --popover: 0 0% 3.9%;
+      --popover-foreground: 0 0% 98%;
+
+      --primary: 221 83% 53%;
+      --primary-foreground: 0 0% 98%;
+
+      --secondary: 0 0% 14.9%;
+      --secondary-foreground: 0 0% 98%;
+
+      --muted: 0 0% 14.9%;
+      --muted-foreground: 0 0% 63.9%;
+
+      --accent: 0 0% 14.9%;
+      --accent-foreground: 0 0% 98%;
+
+      --destructive: 0 62.8% 30.6%;
+      --destructive-foreground: 0 0% 98%;
+
+      --border: 0 0% 14.9%;
+      --input: 0 0% 14.9%;
+      --ring: 221 83% 53%;
+    }
+  }
+
   .dark {
     /* Optional dark mode - kept minimal */
     --background: 0 0% 3.9%;
@@ -76,9 +116,34 @@
   * {
     @apply border-border;
   }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Reduce motion for accessibility */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Critical interactive states */
+  button, [role="button"], a {
+    @apply transition-colors duration-150;
   }
 }
 
@@ -87,10 +152,21 @@
   .gpu-accelerated {
     transform: translateZ(0);
     will-change: transform;
+    backface-visibility: hidden;
   }
-  
+
   .smooth-scroll {
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
+  }
+
+  /* Optimize images for fast loading */
+  img {
+    content-visibility: auto;
+  }
+
+  /* Lighthouse CLS optimization - reserve space for dynamic content */
+  .content-placeholder {
+    contain: layout style paint;
   }
 }

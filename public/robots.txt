@@ -6,6 +6,11 @@ Allow: /
 Disallow: /admin
 Disallow: /auth/
 Disallow: /upload
+Disallow: /api/
+
+# Crawl delay (in seconds)
+Crawl-delay: 1
 
 # Sitemap location
+Sitemap: https://eduhub.com/sitemap.xml
 Sitemap: https://yourdomain.com/sitemap.xml

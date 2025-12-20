@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { MainLayout } from '@/components/layout/main-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +9,31 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase, Subject, Lesson } from '@/lib/supabase';
 import { BookOpen, TrendingUp, Clock, ArrowRight } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+
+// Lazy load less critical sections
+const RecentLessonsSection = dynamic(
+  () => import('@/components/sections/recent-lessons'),
+  { loading: () => <LessonsLoadingSkeleton />, ssr: true }
+);
+
+const PopularLessonsSection = dynamic(
+  () => import('@/components/sections/popular-lessons'),
+  { loading: () => <LessonsLoadingSkeleton />, ssr: true }
+);
+
+function LessonsLoadingSkeleton() {
+  return (
+    <div className="space-y-4">
+      <div className="h-8 w-40 bg-gray-200 rounded animate-pulse" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-4 sm:px-0">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-48 bg-gray-100 rounded-xl animate-pulse" />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function Home() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -105,91 +131,13 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="space-y-4">
-          <div className="flex items-center gap-2 mb-4 sm:mb-6 px-4 sm:px-0">
-            <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-            <h2 className="text-2xl sm:text-3xl font-bold">Recent Lessons</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-4 sm:px-0">
-            {recentLessons.map((lesson) => (
-              <Link
-                key={lesson.id}
-                href={`/lessons/${lesson.slug}`}
-                className="group gpu-accelerated"
-              >
-                <Card className="h-full border border-border/60 bg-white rounded-xl transition-all active:scale-[0.98] hover:border-primary/50">
-                  <CardHeader className="p-4 sm:p-6">
-                    <div className="flex items-start justify-between gap-2">
-                      <CardTitle className="group-hover:text-primary transition-colors line-clamp-2 text-lg font-semibold">
-                        {lesson.title}
-                      </CardTitle>
-                      {lesson.is_premium && (
-                        <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 shrink-0">
-                          Premium
-                        </Badge>
-                      )}
-                    </div>
-                    <CardDescription className="mt-1">
-                      {lesson.subject?.name}
-                      {lesson.semester && ` • ${lesson.semester}`}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-4 sm:p-6 pt-0">
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <BookOpen className="h-4 w-4" />
-                        {lesson.views} views
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        </section>
+        <Suspense fallback={<LessonsLoadingSkeleton />}>
+          <RecentLessonsSection lessons={recentLessons} />
+        </Suspense>
 
-        <section className="space-y-4">
-          <div className="flex items-center gap-2 mb-4 sm:mb-6 px-4 sm:px-0">
-            <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-            <h2 className="text-2xl sm:text-3xl font-bold">Popular Lessons</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-4 sm:px-0">
-            {popularLessons.map((lesson) => (
-              <Link
-                key={lesson.id}
-                href={`/lessons/${lesson.slug}`}
-                className="group gpu-accelerated"
-              >
-                <Card className="h-full border border-border/60 bg-white rounded-xl transition-all active:scale-[0.98] hover:border-primary/50">
-                  <CardHeader className="p-4 sm:p-6">
-                    <div className="flex items-start justify-between gap-2">
-                      <CardTitle className="group-hover:text-primary transition-colors line-clamp-2 text-lg font-semibold">
-                        {lesson.title}
-                      </CardTitle>
-                      {lesson.is_premium && (
-                        <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 shrink-0">
-                          Premium
-                        </Badge>
-                      )}
-                    </div>
-                    <CardDescription className="mt-1">
-                      {lesson.subject?.name}
-                      {lesson.semester && ` • ${lesson.semester}`}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-4 sm:p-6 pt-0">
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <TrendingUp className="h-4 w-4" />
-                        {lesson.views} views
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        </section>
+        <Suspense fallback={<LessonsLoadingSkeleton />}>
+          <PopularLessonsSection lessons={popularLessons} />
+        </Suspense>
       </div>
     </MainLayout>
   );
