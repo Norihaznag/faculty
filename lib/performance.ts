@@ -1,3 +1,5 @@
+import React from 'react';
+
 /**
  * Performance optimization utility
  * Handles lazy loading, intersection observer, and performance metrics
@@ -37,8 +39,8 @@ export function useIntersectionObserver(
  */
 export function reportWebVitals(metric: any) {
   // Send to analytics service
-  if (typeof window !== 'undefined' && window.gtag) {
-    window.gtag('event', metric.name, {
+  if (typeof window !== 'undefined' && (window as any).gtag) {
+    (window as any).gtag('event', metric.name, {
       value: Math.round(metric.value),
       event_category: 'web_vitals',
       event_label: metric.id,
