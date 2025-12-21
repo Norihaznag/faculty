@@ -28,6 +28,19 @@ export default function SignUpPage() {
     setError('');
     setLoading(true);
 
+    // Validate inputs
+    if (!fullName.trim()) {
+      setError('Please enter your full name');
+      setLoading(false);
+      return;
+    }
+
+    if (!email.includes('@')) {
+      setError('Please enter a valid email address');
+      setLoading(false);
+      return;
+    }
+
     if (password.length < 6) {
       setError('Password must be at least 6 characters long');
       setLoading(false);
@@ -37,7 +50,15 @@ export default function SignUpPage() {
     const { error: signUpError } = await signUp(email, password, fullName, role);
 
     if (signUpError) {
-      setError(signUpError.message);
+      // Handle specific Supabase errors
+      const errorMessage = signUpError.message || 'Signup failed. Please try again.';
+      if (errorMessage.includes('already registered')) {
+        setError('This email is already registered. Please sign in instead.');
+      } else if (errorMessage.includes('weak password')) {
+        setError('Password is too weak. Please use a stronger password.');
+      } else {
+        setError(errorMessage);
+      }
       setLoading(false);
     } else {
       setSuccess(true);

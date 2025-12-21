@@ -569,7 +569,21 @@ BEGIN
     NEW.id,
     NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email),
-    COALESCE((NEW.raw_user_meta_data->>'role')::user_role, 'student'::user_role)
+    CASE
+      WHEN NEW.raw_user_meta_data->>'role' IN ('teacher', 'moderator', 'admin') 
+        THEN (NEW.raw_user_meta_data->>'role')::user_role
+      ELSE 'student'::user_role
+    END
+  );
+  RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+  -- If anything fails, create profile with student role
+  INSERT INTO public.profiles (id, email, full_name, role)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email),
+    'student'::user_role
   );
   RETURN NEW;
 END;

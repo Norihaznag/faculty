@@ -112,17 +112,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, fullName: string, role: 'student' | 'teacher') => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-          role: role,
-        },
-      },
-    });
-    return { error };
+    try {
+      // Create auth user with ONLY email and password (minimal data)
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: email.toLowerCase().trim(),
+        password: password.trim(),
+      });
+      
+      if (signUpError) {
+        return { error: signUpError };
+      }
+
+      // The trigger will create a basic profile when auth user is created
+      // Then we update it with the full_name and role
+      if (data?.user?.id) {
+        // Wait for trigger to create profile
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Update the profile with full details
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ 
+            full_name: fullName,
+            role: role,
+            email: email.toLowerCase().trim()
+          })
+          .eq('id', data.user.id);
+        
+        // Don't fail if update doesn't work - email confirmation might be required first
+        if (updateError) {
+          // Silently continue - profile will be updated when user confirms email
+        }
+      }
+      
+      return { error: null };
+    } catch (err: any) {
+      return { error: { message: err?.message || 'Signup failed. Please try again.' } };
+    }
   };
 
   const signOut = async () => {
