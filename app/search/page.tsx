@@ -48,33 +48,33 @@ export default function SearchPage() {
 
   return (
     <MainLayout>
-      <div className="container mx-auto px-4 py-8 space-y-6">
+      <div className="space-y-6">
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Search className="h-6 w-6" />
-            <h1 className="text-3xl font-bold">Search Results</h1>
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <Search className="h-5 w-5 sm:h-6 sm:w-6" />
+            <h1 className="text-2xl sm:text-3xl font-bold">Search Results</h1>
           </div>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground">
             {query ? `Showing results for "${query}"` : 'Enter a search query'}
           </p>
         </div>
 
         {loading ? (
-          <p>Searching...</p>
+          <p className="text-sm sm:text-base">Searching...</p>
         ) : lessons.length === 0 ? (
           <Card>
             <CardContent className="pt-6">
-              <p className="text-center text-muted-foreground">
+              <p className="text-center text-sm sm:text-base text-muted-foreground">
                 No lessons found matching your search.
               </p>
             </CardContent>
           </Card>
         ) : (
           <>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Found {lessons.length} result{lessons.length !== 1 ? 's' : ''}
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {lessons.map((lesson) => (
                 <Link
                   key={lesson.id}
@@ -84,20 +84,20 @@ export default function SearchPage() {
                   <Card className="h-full transition-all hover:shadow-lg">
                     <CardHeader>
                       <div className="flex items-start justify-between gap-2">
-                        <CardTitle className="group-hover:text-primary transition-colors line-clamp-2">
+                        <CardTitle className="group-hover:text-primary transition-colors line-clamp-2 text-base sm:text-lg">
                           {lesson.title}
                         </CardTitle>
                         {lesson.is_premium && (
-                          <Badge variant="secondary">Premium</Badge>
+                          <Badge variant="secondary" className="shrink-0 text-xs">Premium</Badge>
                         )}
                       </div>
-                      <CardDescription>
+                      <CardDescription className="text-xs sm:text-sm">
                         {lesson.subject?.name}
                         {lesson.semester && ` • ${lesson.semester}`}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-4 text-xs sm:text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <BookOpen className="h-4 w-4" />
                           {lesson.views} views

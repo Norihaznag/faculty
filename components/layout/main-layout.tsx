@@ -58,28 +58,31 @@ export function MainLayout({ children }: MainLayoutProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-background">
+      {/* Fixed Header - Full Width */}
+      <Header onMenuClick={toggleSidebar} sidebarOpen={sidebarOpen} />
+
       {/* Overlay for mobile */}
       {mounted && !isDesktop && sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/60 z-30 lg:hidden"
           onClick={closeSidebar}
           role="presentation"
         />
       )}
 
-      {/* Fixed Header */}
-      <Header onMenuClick={toggleSidebar} sidebarOpen={sidebarOpen} />
+      {/* Sidebar + Main Content */}
+      <div className="flex flex-1">
+        {/* Sidebar - shows in layout flow on desktop */}
+        <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} isMobile={!isDesktop} />
 
-      {/* Sidebar */}
-      <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} isMobile={!isDesktop} />
-
-      {/* Main Content */}
-      <main className="col-span-1 pt-16 bg-background min-h-screen">
-        <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-          {children}
-        </div>
-      </main>
+        {/* Main Content */}
+        <main className="flex-1 pt-0 bg-background overflow-x-hidden">
+          <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+            {children}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

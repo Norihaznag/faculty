@@ -82,19 +82,19 @@ export default function Home() {
 
   return (
     <MainLayout>
-      <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-10 sm:space-y-12">
+      <div className="space-y-10 sm:space-y-12">
         {/* Hero Section */}
         <section className="text-center space-y-3 sm:space-y-4 py-6 sm:py-10">
           <div className="inline-block px-4 py-2 bg-blue-100 rounded-full mb-4">
-            <span className="text-blue-700 font-semibold text-sm">Open Educational Resource Platform</span>
+            <span className="text-blue-700 font-semibold text-xs sm:text-sm">Open Educational Resource Platform</span>
           </div>
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-foreground">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground">
             Free Learning for Everyone
           </h1>
-          <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto px-4 leading-relaxed">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed px-0">
             Access thousands of lessons, modules, PDFs, and educational materials from faculties and schools worldwide. A community-driven platform for open education.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center pt-6 px-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center pt-6">
             <Button size="lg" className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700" asChild>
               <Link href="/subjects/computer-science">
                 Browse Resources <ArrowRight className="ml-2 h-4 w-4" />
@@ -153,11 +153,11 @@ export default function Home() {
 
         {/* Faculties/Subjects Section */}
         <section className="space-y-4">
-          <div className="flex items-center gap-2 mb-4 sm:mb-6 px-4 sm:px-0">
+          <div className="flex items-center gap-2 mb-4 sm:mb-6">
             <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
             <h2 className="text-2xl sm:text-3xl font-bold">Browse by Faculty</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 px-4 sm:px-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {subjects.map((subject, index) => (
               <Link
                 key={subject.id}

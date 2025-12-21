@@ -89,32 +89,33 @@ export function LessonViewW3Style({ lesson, previousLesson, nextLesson }: Lesson
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 min-h-[calc(100vh-3.5rem)]">
-      {/* Sidebar - TOC */}
-      <aside className="hidden lg:block w-64 flex-shrink-0 bg-gray-50 border-r border-border">
-        <div className="sticky top-0 p-6 h-screen overflow-y-auto">
-          <h3 className="font-semibold text-sm text-gray-700 mb-4">TABLE OF CONTENTS</h3>
-          <nav className="space-y-2 text-sm">
-            <a href="#introduction" className="block text-blue-600 hover:underline">
-              Introduction
-            </a>
-            <a href="#content" className="block text-blue-600 hover:underline">
-              Main Content
-            </a>
-            {lesson.pdf_url && (
-              <a href="#resources" className="block text-blue-600 hover:underline">
-                Resources
+    <div className="min-h-[calc(100vh-3.5rem)]">
+      <div className="flex flex-col lg:flex-row gap-0">
+        {/* Sidebar - TOC - Desktop only */}
+        <aside className="hidden lg:block w-64 flex-shrink-0 bg-gray-50 border-r border-border">
+          <div className="sticky top-14 p-6 max-h-[calc(100vh-3.5rem)] overflow-y-auto">
+            <h3 className="font-semibold text-sm text-gray-700 mb-4">TABLE OF CONTENTS</h3>
+            <nav className="space-y-2 text-sm">
+              <a href="#introduction" className="block text-blue-600 hover:underline">
+                Introduction
               </a>
-            )}
-            <a href="#related" className="block text-blue-600 hover:underline">
-              Related Lessons
-            </a>
-          </nav>
-        </div>
-      </aside>
+              <a href="#content" className="block text-blue-600 hover:underline">
+                Main Content
+              </a>
+              {lesson.pdf_url && (
+                <a href="#resources" className="block text-blue-600 hover:underline">
+                  Resources
+                </a>
+              )}
+              <a href="#related" className="block text-blue-600 hover:underline">
+                Related Lessons
+              </a>
+            </nav>
+          </div>
+        </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 px-4 sm:px-6 py-8 sm:py-12 max-w-4xl">
+        {/* Main Content */}
+        <main className="flex-1 px-3 sm:px-6 py-6 sm:py-12">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
           <Link href="/" className="hover:text-foreground">Home</Link>
@@ -132,12 +133,12 @@ export function LessonViewW3Style({ lesson, previousLesson, nextLesson }: Lesson
 
         {/* Header */}
         <div className="space-y-4 mb-8">
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-foreground">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-foreground">
             {lesson.title}
           </h1>
 
           {/* Metadata */}
-          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
             {lesson.subject && (
               <div className="flex items-center gap-2">
                 <span className="font-medium">{lesson.subject.name}</span>
@@ -297,6 +298,7 @@ export function LessonViewW3Style({ lesson, previousLesson, nextLesson }: Lesson
           )}
         </div>
       </main>
+      </div>
     </div>
   );
 }

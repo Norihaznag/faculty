@@ -119,32 +119,51 @@ export function Header({ onMenuClick, sidebarOpen = false }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border bg-white/80 backdrop-blur-sm">
-      <div className="flex h-14 items-center px-4 gap-4">
+    <header className="sticky top-0 z-40 w-screen border-b border-border bg-white/80 backdrop-blur-sm">
+      <div className="flex h-14 items-center px-2 sm:px-4 gap-2 sm:gap-4 w-full">
         {/* Menu Toggle */}
         <Button
           variant="ghost"
           size="icon"
           onClick={onMenuClick}
           aria-label="Toggle sidebar"
-          className="shrink-0 lg:hidden"
+          className="shrink-0"
         >
           <Menu className="h-5 w-5" />
         </Button>
 
-        {/* Logo (Desktop) */}
+        {/* Logo (Mobile & Desktop) */}
         <Link 
           href="/" 
-          className="hidden lg:flex items-center space-x-2 font-semibold text-lg text-foreground hover:text-primary transition-colors"
+          className="flex lg:hidden items-center space-x-1 font-semibold text-sm sm:text-base text-foreground hover:text-primary transition-colors shrink-0"
+        >
+          <BookOpen className="h-4 w-4 sm:h-5 sm:w-5" />
+          <span className="hidden xs:inline">EduHub</span>
+        </Link>
+
+        <Link 
+          href="/" 
+          className="hidden lg:flex items-center space-x-2 font-semibold text-lg text-foreground hover:text-primary transition-colors shrink-0"
         >
           <BookOpen className="h-5 w-5" />
           <span>EduHub</span>
         </Link>
 
-        {/* Search */}
-        <div className="flex-1 max-w-2xl">
-          <form onSubmit={handleSearch}>
-            <div className="relative">
+        {/* Mobile Search Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => router.push('/search')}
+          aria-label="Open search"
+          className="sm:hidden shrink-0"
+        >
+          <Search className="h-5 w-5" />
+        </Button>
+
+        {/* Search - Desktop */}
+        <div className="hidden sm:flex flex-1 max-w-2xl relative">
+          <form onSubmit={handleSearch} className="w-full">
+            <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
               <Input
                 type="search"
@@ -154,6 +173,7 @@ export function Header({ onMenuClick, sidebarOpen = false }: HeaderProps) {
                 onFocus={() => {
                   if (searchQuery.trim()) setShowSuggestions(true);
                 }}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                 className="pl-9 w-full bg-secondary border border-border text-foreground placeholder:text-muted focus:border-primary focus:ring-1 focus:ring-primary/20"
                 aria-label="Search"
               />
@@ -161,7 +181,7 @@ export function Header({ onMenuClick, sidebarOpen = false }: HeaderProps) {
           </form>
 
           {showSuggestions && (suggestions.lessons.length > 0 || suggestions.subjects.length > 0 || loadingSuggestions) && (
-            <div className="absolute mt-1 w-full rounded-lg border border-border bg-white shadow-sm z-50">
+            <div className="fixed top-14 left-1/2 -translate-x-1/2 rounded-lg border border-border bg-white shadow-lg z-50 w-[calc(100vw-2rem)] sm:w-auto" style={{maxWidth: '40rem'}}>
               <div className="p-1 space-y-0.5 max-h-80 overflow-y-auto">
                 {loadingSuggestions && (
                   <p className="text-xs text-muted px-2 py-1">Loading...</p>
@@ -179,8 +199,8 @@ export function Header({ onMenuClick, sidebarOpen = false }: HeaderProps) {
                         onClick={() => handleSelectLesson(lesson.slug)}
                         className="w-full text-left px-3 py-2 rounded hover:bg-secondary transition-colors text-foreground active:bg-secondary"
                       >
-                        <div className="text-sm font-medium">{lesson.title}</div>
-                        <div className="text-xs text-muted">
+                        <div className="text-sm font-medium truncate">{lesson.title}</div>
+                        <div className="text-xs text-muted truncate">
                           {lesson.subject?.name}
                         </div>
                       </button>
@@ -191,7 +211,7 @@ export function Header({ onMenuClick, sidebarOpen = false }: HeaderProps) {
                 {suggestions.subjects.length > 0 && (
                   <div>
                     <p className="px-2 py-1 text-xs font-semibold text-muted flex items-center gap-1">
-                      <Tags className="h-3 w-3" /> Faculties
+                      <Tags className="h-3 w-3" /> Subjects
                     </p>
                     {suggestions.subjects.map((subject) => (
                       <button
@@ -200,7 +220,7 @@ export function Header({ onMenuClick, sidebarOpen = false }: HeaderProps) {
                         onClick={() => handleSelectSubject(subject.slug)}
                         className="w-full text-left px-3 py-2 rounded hover:bg-secondary transition-colors text-foreground"
                       >
-                        <div className="text-sm font-medium">{subject.name}</div>
+                        <div className="text-sm font-medium truncate">{subject.name}</div>
                       </button>
                     ))}
                   </div>
@@ -217,18 +237,18 @@ export function Header({ onMenuClick, sidebarOpen = false }: HeaderProps) {
         </div>
 
         {/* User Menu */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 ml-auto">
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="User menu">
-                  <User className="h-5 w-5" />
+                <Button variant="ghost" size="icon" aria-label="User menu" className="h-9 w-9 sm:h-10 sm:w-10">
+                  <User className="h-4 w-4 sm:h-5 sm:w-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-white">
+              <DropdownMenuContent align="end" className="w-48 sm:w-56 bg-white">
                 <div className="px-2 py-1.5">
-                  <p className="text-sm font-medium">{profile?.full_name}</p>
-                  <p className="text-xs text-muted">{profile?.email}</p>
+                  <p className="text-sm font-medium text-foreground truncate">{profile?.full_name}</p>
+                  <p className="text-xs text-muted truncate">{profile?.email}</p>
                   <p className="text-xs text-primary capitalize font-medium mt-1">
                     {profile?.role}
                   </p>
@@ -253,10 +273,10 @@ export function Header({ onMenuClick, sidebarOpen = false }: HeaderProps) {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button variant="default" size="sm" asChild className="bg-primary hover:bg-blue-600 text-white">
+            <Button variant="default" size="sm" asChild className="bg-primary hover:bg-blue-600 text-white text-xs sm:text-sm">
               <Link href="/auth/login">
-                <LogIn className="mr-2 h-4 w-4" />
-                Sign In
+                <LogIn className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden xs:inline">Sign In</span>
               </Link>
             </Button>
           )}

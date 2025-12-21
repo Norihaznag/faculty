@@ -17,12 +17,28 @@ export default function BookmarksPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const fetchBookmarks = async () => {
+      if (!user) return;
+
+      const { data } = await supabase
+        .from('bookmarks')
+        .select('lesson:lessons(*, subject:subjects(*))')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (data) {
+        setLessons(data.map((b: any) => b.lesson).filter(Boolean));
+      }
+
+      setLoading(false);
+    };
+
     if (!authLoading && !user) {
       router.push('/auth/login');
     } else if (user) {
       fetchBookmarks();
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, router]);
 
   const fetchBookmarks = async () => {
     if (!user) return;

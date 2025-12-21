@@ -9,11 +9,11 @@ import { TrendingUp, BookOpen } from 'lucide-react';
 export default function PopularLessonsSection({ lessons }: { lessons: Lesson[] }) {
   return (
     <section className="space-y-4">
-      <div className="flex items-center gap-2 mb-4 sm:mb-6 px-4 sm:px-0">
+      <div className="flex items-center gap-2 mb-4 sm:mb-6">
         <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
         <h2 className="text-2xl sm:text-3xl font-bold">Popular Lessons</h2>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-4 sm:px-0">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {lessons.map((lesson) => (
           <Link
             key={lesson.id}

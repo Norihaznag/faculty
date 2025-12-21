@@ -99,11 +99,16 @@ export function Sidebar({ isOpen, onClose, isMobile = false }: SidebarProps) {
 
       <aside
         className={cn(
-          'fixed top-14 left-0 h-[calc(100vh-3.5rem)] w-64 bg-white border-r border-border z-50 transition-transform duration-200 ease-out overflow-hidden',
-          isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          'w-64 bg-white border-r border-border overflow-hidden',
+          // Mobile: fixed overlay
+          'fixed top-14 left-0 h-[calc(100vh-3.5rem)] z-40 transition-transform duration-200 ease-out lg:hidden',
+          isOpen ? 'translate-x-0' : '-translate-x-full',
+          // Desktop: relative + toggle support
+          'lg:relative lg:transition-all lg:duration-200 lg:flex lg:flex-col lg:h-[calc(100vh-3.5rem)]',
+          isOpen ? 'lg:w-64' : 'lg:w-0 lg:overflow-hidden'
         )}
       >
-        <ScrollArea className="h-full w-full">
+        <ScrollArea className="h-full w-64">
           <div className="space-y-1 p-4">
             {/* Main Navigation */}
             <div className="space-y-1 pb-3">
