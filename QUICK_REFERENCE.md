@@ -1,41 +1,48 @@
-# EduHub UI Refactor - Quick Reference Guide
+# EduHub iTunes-Inspired Light Theme - Quick Reference Guide
 
 ## 🎨 Color Palette Quick Reference
 
 ### Primary Colors
 ```
-Primary Green:        #0d7f3a (Tailwind: [primary])
-Accent Green:        #1bb357 (Tailwind: [accent])
-Dark Background:     #161616 (Tailwind: bg-slate-950)
-Card Background:     #1f1f1f (Tailwind: bg-slate-900)
+Primary Blue:         #0085ff (Tailwind: [primary] bg-primary text-primary)
+Background:           #fafafa (Tailwind: bg-background)
+Foreground (Text):    #212121 (Tailwind: text-foreground)
+Secondary Gray:       #f3f3f3 (Tailwind: bg-secondary)
+Border:               #e5e5e5 (Tailwind: border-border)
 ```
 
 ### Text Colors
 ```
-Primary Text:        #f2f2f2 (Tailwind: text-white/slate-50)
-Secondary Text:      #b0b0b0 (Tailwind: text-slate-400)
-Muted Text:          #808080 (Tailwind: text-slate-500)
+Primary Text:         #212121 (Tailwind: text-foreground)
+Secondary Text:       #737373 (Tailwind: text-muted)
+Accent Text:          #0085ff (Tailwind: text-primary)
 ```
 
 ### Component Usage
 ```tsx
 // Header
-className="bg-slate-950 border-slate-800"
+className="bg-white/80 border-b border-border"
 
 // Sidebar
-className="bg-slate-900 border-slate-800"
+className="bg-white border-r border-border"
 
 // Main Content
-className="bg-slate-950"
+className="bg-background"
 
 // Cards
-className="bg-slate-900 border-slate-800"
+className="bg-white border border-border rounded-lg p-6"
 
 // Buttons
-className="bg-primary text-white hover:bg-accent"
+className="bg-primary text-white hover:bg-blue-600"
 
 // Links
-className="text-primary hover:text-accent"
+className="text-primary hover:underline"
+
+// Active States
+className="bg-primary/10 text-primary"
+
+// Hover States
+className="hover:bg-secondary transition-colors"
 ```
 
 ---
@@ -44,7 +51,7 @@ className="text-primary hover:text-accent"
 
 ### Main Layout Grid
 ```tsx
-<div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] min-h-screen">
+<div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] min-h-screen bg-background">
   {/* Sidebar: 320px on desktop, hidden on mobile */}
   {/* Main: full width on mobile, flex on desktop */}
 </div>
@@ -59,52 +66,52 @@ className="text-primary hover:text-accent"
 
 ### Sidebar Container
 ```tsx
-className="fixed top-16 left-0 h-[calc(100vh-4rem)] w-80 bg-slate-900"
+className="fixed top-16 left-0 h-[calc(100vh-4rem)] w-80 bg-white border-r border-border"
 ```
 
 ### Header (Fixed)
 ```tsx
-className="sticky top-0 z-40 h-16 bg-slate-950 border-b border-slate-800"
+className="sticky top-0 z-40 h-16 bg-white/80 border-b border-border"
 ```
 
 ---
 
 ## 🔤 Typography Classes
 
-### Headings
+### Headings (Light Theme)
 ```tsx
 // H1 - Page/Article Titles
-<h1 className="text-4xl md:text-5xl font-bold text-white leading-tight">
+<h1 className="text-4xl md:text-5xl font-bold text-foreground leading-tight">
 
 // H2 - Major Sections
-<h2 className="text-3xl md:text-4xl font-bold text-white leading-snug mt-8 mb-4">
+<h2 className="text-3xl md:text-4xl font-bold text-foreground leading-snug mt-8 mb-4">
 
 // H3 - Subsections
-<h3 className="text-2xl md:text-3xl font-semibold text-white leading-snug mt-6 mb-3">
+<h3 className="text-2xl md:text-3xl font-semibold text-foreground leading-snug mt-6 mb-3">
 
 // H4 - Minor Headings
-<h4 className="text-xl md:text-2xl font-semibold text-slate-100 mt-5 mb-2">
+<h4 className="text-xl md:text-2xl font-semibold text-foreground mt-5 mb-2">
 ```
 
 ### Body Text
 ```tsx
 // Regular paragraph
-<p className="text-base leading-relaxed text-slate-300 mb-4">
+<p className="text-base leading-relaxed text-foreground mb-4">
 
 // Small text
-<span className="text-sm text-slate-400">
+<span className="text-sm text-muted">
 
 // Very small (metadata)
-<span className="text-xs text-slate-500">
+<span className="text-xs text-muted">
 ```
 
 ### Code & Pre
 ```tsx
 // Inline code
-<code className="bg-slate-800 text-slate-100 px-2 py-1 rounded text-sm">
+<code className="bg-secondary text-foreground px-2 py-1 rounded text-sm">
 
 // Code block
-<pre className="bg-slate-900 border border-slate-700 rounded-lg p-4">
+<pre className="bg-secondary border border-border rounded-lg p-4">
   <code>...</code>
 </pre>
 ```
@@ -115,28 +122,28 @@ className="sticky top-0 z-40 h-16 bg-slate-950 border-b border-slate-800"
 
 ### Buttons
 ```tsx
-// Primary (Green)
-<Button className="bg-primary hover:bg-accent text-white">
+// Primary (Blue)
+<Button className="bg-primary hover:bg-blue-600 text-white">
 
-// Secondary (Dark)
-<Button variant="secondary" className="bg-slate-800 hover:bg-slate-700 text-white">
+// Secondary (Light)
+<Button variant="secondary" className="bg-secondary hover:bg-border text-foreground border border-border">
 
 // Ghost (Text only)
-<Button variant="ghost" className="text-primary hover:text-accent hover:bg-white/10">
+<Button variant="ghost" className="text-primary hover:text-accent hover:bg-secondary">
 ```
 
 ### Links
 ```tsx
 // Default
-<a className="text-primary hover:text-accent transition-colors">
+<a className="text-primary hover:underline transition-colors">
 
 // Within paragraphs
-<a className="text-primary underline hover:text-accent">
+<a className="text-primary underline hover:text-blue-600">
 ```
 
 ### Input Fields
 ```tsx
-<Input className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-400 focus:border-primary/50 focus:ring-1 focus:ring-primary/20">
+<Input className="bg-white border-border text-foreground placeholder:text-muted focus:border-primary focus:ring-1 focus:ring-primary/20">
 ```
 
 ### Badges & Tags
@@ -145,7 +152,7 @@ className="sticky top-0 z-40 h-16 bg-slate-950 border-b border-slate-800"
 <Badge className="bg-primary text-white">
 
 // Outline tag
-<Badge variant="outline" className="border-slate-700 text-slate-300 hover:bg-primary/20">
+<Badge variant="outline" className="border-border text-foreground hover:bg-secondary">
 ```
 
 ---
@@ -173,7 +180,7 @@ className="sticky top-0 z-40 h-16 bg-slate-950 border-b border-slate-800"
 
 ### Focus Ring
 ```tsx
-className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-950"
+className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
 ```
 
 ### Screen Reader Only
@@ -193,7 +200,7 @@ className="focus-visible:ring-2 focus-visible:ring-primary"
 ### Sidebar Section
 ```tsx
 <div>
-  <h3 className="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+  <h3 className="px-3 text-xs font-semibold text-muted uppercase tracking-wide mb-2">
     Section Title
   </h3>
   <div className="space-y-1">
@@ -204,7 +211,7 @@ className="focus-visible:ring-2 focus-visible:ring-primary"
 
 ### Card Component
 ```tsx
-<div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
+<div className="bg-white border border-border rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
   {/* Content */}
 </div>
 ```
@@ -214,13 +221,13 @@ className="focus-visible:ring-2 focus-visible:ring-primary"
 <Link
   href="/"
   className={cn(
-    'flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all',
+    'flex items-center space-x-3 px-3 py-2 rounded transition-all text-sm',
     isActive
-      ? 'bg-primary text-white font-medium'
-      : 'text-slate-300 hover:bg-slate-800'
+      ? 'bg-primary/10 text-primary font-medium'
+      : 'text-foreground hover:bg-secondary'
   )}
 >
-  <Icon className="h-5 w-5" />
+  <Icon className="h-4 w-4" />
   <span>Label</span>
 </Link>
 ```
@@ -228,10 +235,10 @@ className="focus-visible:ring-2 focus-visible:ring-primary"
 ### Search Input
 ```tsx
 <div className="relative">
-  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
   <Input
     placeholder="Search..."
-    className="pl-9 bg-slate-800 border-slate-700 text-white"
+    className="pl-9 bg-secondary border-border text-foreground"
   />
 </div>
 ```
@@ -242,8 +249,8 @@ className="focus-visible:ring-2 focus-visible:ring-primary"
 
 ### Alert/Info Box
 ```tsx
-<div className="bg-slate-900 border border-slate-700 rounded-lg p-4 text-slate-300">
-  <h4 className="font-semibold text-white mb-2">Note</h4>
+<div className="bg-secondary border border-border rounded-lg p-4 text-foreground">
+  <h4 className="font-semibold text-foreground mb-2">Note</h4>
   <p>Information text here</p>
 </div>
 ```
@@ -252,17 +259,17 @@ className="focus-visible:ring-2 focus-visible:ring-primary"
 ```tsx
 <div className="flex flex-col items-center justify-center py-12 text-center">
   <div className="text-5xl mb-4">📚</div>
-  <h3 className="text-xl font-semibold text-white mb-2">No lessons yet</h3>
-  <p className="text-slate-400">Add some content to get started</p>
+  <h3 className="text-xl font-semibold text-foreground mb-2">No lessons yet</h3>
+  <p className="text-muted">Add some content to get started</p>
 </div>
 ```
 
 ### Loading Skeleton
 ```tsx
 <div className="space-y-3">
-  <div className="h-4 bg-slate-800 rounded animate-pulse w-3/4" />
-  <div className="h-4 bg-slate-800 rounded animate-pulse w-full" />
-  <div className="h-4 bg-slate-800 rounded animate-pulse w-4/5" />
+  <div className="h-4 bg-secondary rounded animate-pulse w-3/4" />
+  <div className="h-4 bg-secondary rounded animate-pulse w-full" />
+  <div className="h-4 bg-secondary rounded animate-pulse w-4/5" />
 </div>
 ```
 
@@ -295,30 +302,26 @@ import { LessonHeader } from '@/components/lessons/lesson-header';
 All available in your Tailwind config:
 
 ```css
-/* Primary - Educational Green */
---primary: 147 78% 38%;          /* #0d7f3a */
+/* Primary - iTunes Blue */
+--primary: 213 100% 52%;          /* #0085ff */
 --primary-foreground: 0 0% 100%;  /* white */
 
-/* Accent - Bright Green */
---accent: 147 78% 48%;           /* #1bb357 */
---accent-foreground: 0 0% 100%;
-
 /* Backgrounds */
---background: 0 0% 9%;           /* #161616 */
---foreground: 0 0% 95%;          /* #f2f2f2 */
---card: 0 0% 12%;                /* #1f1f1f */
+--background: 0 0% 98%;           /* #fafafa */
+--foreground: 0 0% 13%;           /* #212121 */
+--secondary: 0 0% 95%;            /* #f3f3f3 */
 
 /* Borders & Input */
---border: 0 0% 20%;              /* #333 */
---input: 0 0% 20%;
---ring: 147 78% 38%;             /* green focus ring */
+--border: 0 0% 90%;               /* #e5e5e5 */
+--input: 0 0% 90%;
+--ring: 213 100% 52%;             /* blue focus ring */
 
 /* Text Levels */
---muted: 0 0% 30%;               /* #4d4d4d */
---muted-foreground: 0 0% 70%;
+--muted: 0 0% 45%;                /* #737373 */
+--muted-foreground: 0 0% 45%;
 
 /* Status */
---destructive: 0 84.2% 60.2%;    /* #f87171 (red) */
+--destructive: 0 84.2% 60.2%;     /* #f87171 (red) */
 ```
 
 ---
@@ -327,20 +330,20 @@ All available in your Tailwind config:
 
 ### When Creating New Pages
 1. Use `max-w-4xl mx-auto px-4` for centered content
-2. Use `text-white` for primary headings
-3. Use `text-slate-300` for body text
+2. Use `text-foreground` for primary headings
+3. Use `text-foreground` for body text (muted for secondary)
 4. Use `bg-primary` for action buttons
 5. Use `text-primary` for links
-6. Use `bg-slate-900 border-slate-800` for cards
-7. Use `bg-slate-800` for secondary backgrounds
+6. Use `bg-white border border-border` for cards
+7. Use `bg-secondary` for secondary backgrounds
 
 ### When Styling Components
 ```tsx
 // DO - Use Tailwind utilities
-className="bg-slate-900 text-white border border-slate-800"
+className="bg-white text-foreground border border-border"
 
 // DON'T - Use inline styles
-style={{ backgroundColor: '#1f1f1f' }}
+style={{ backgroundColor: '#ffffff' }}
 
 // DO - Use cn() for conditional classes
 className={cn(
@@ -356,11 +359,11 @@ Edit `app/globals.css` CSS variables, NOT Tailwind config. This keeps colors con
 
 ## 📊 Quick Stats
 
-- **Primary Green:** #0d7f3a (W3Schools standard)
-- **Dark Background:** #161616 (reduces eye strain)
+- **Primary Blue:** #0085ff (iTunes standard)
+- **Light Background:** #fafafa (minimal and clean)
 - **Max Content Width:** 1024px (optimal reading width)
-- **Header Height:** 64px (h-16, increased from 56px)
-- **Sidebar Width:** 320px (increased from 288px, better readability)
+- **Header Height:** 64px (h-16)
+- **Sidebar Width:** 320px (w-80, optimal navigation width)
 - **Typography Scale:** 12px → 40px (covers all content sizes)
 - **Spacing Unit:** 8px (0.5rem)
 
@@ -395,7 +398,7 @@ lighthouse https://your-site.com
 ```css
 /* In app/globals.css */
 :root {
-  --primary: 123 45% 67%;  /* New color */
+  --primary: 213 100% 52%;  /* Blue #0085ff */
 }
 ```
 
@@ -448,7 +451,8 @@ className="top-16"  // Match header height
 
 ---
 
-## 📞 Need Help?
+## 📞 Questions?
+See `ITUNES_THEME_IMPLEMENTATION.md` and `DESIGN_SYSTEM.md` for detailed documentation.
 
 Refer to the full documentation:
 - `UI_REFACTOR_ANALYSIS.md` - Detailed analysis

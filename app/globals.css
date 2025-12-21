@@ -4,43 +4,43 @@
 
 @layer base {
   :root {
-    /* EduHub Dark Theme - W3Schools-style professional */
-    --background: 0 0% 9%; /* near-black background #161616 */
-    --foreground: 0 0% 95%; /* near-white text #f2f2f2 */
+    /* iTunes-Inspired Minimal Light Theme */
+    --background: 0 0% 98%; /* almost-white #fafafa */
+    --foreground: 0 0% 13%; /* dark text #212121 */
 
-    --card: 0 0% 12%; /* dark card background #1f1f1f */
-    --card-foreground: 0 0% 95%;
+    --card: 0 0% 100%; /* pure white */
+    --card-foreground: 0 0% 13%;
 
-    --popover: 0 0% 12%;
-    --popover-foreground: 0 0% 95%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 13%;
 
-    --primary: 147 78% 38%; /* W3Schools educational green #0d7f3a */
+    --primary: 213 100% 52%; /* clean blue #0085ff */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 20%; /* dark gray for secondary */
-    --secondary-foreground: 0 0% 95%;
+    --secondary: 0 0% 92%; /* light gray #ebebeb */
+    --secondary-foreground: 0 0% 20%;
 
-    --muted: 0 0% 30%; /* medium gray for muted text #4d4d4d */
-    --muted-foreground: 0 0% 70%;
+    --muted: 0 0% 60%; /* medium gray #999999 */
+    --muted-foreground: 0 0% 45%;
 
-    --accent: 147 78% 48%; /* bright green for hover/active #1bb357 */
+    --accent: 213 100% 62%; /* bright blue #2b94ff */
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%; /* clean red for errors */
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 20%; /* dark gray borders #333333 */
-    --input: 0 0% 20%;
-    --ring: 147 78% 38%; /* focus ring matches primary green */
+    --border: 0 0% 90%; /* light borders #e5e5e5 */
+    --input: 0 0% 95%; /* input fields #f2f2f2 */
+    --ring: 213 100% 52%;
 
-    --chart-1: 147 78% 38%; /* green */
-    --chart-2: 147 78% 48%; /* bright green */
-    --chart-3: 24 95% 53%; /* orange */
-    --chart-4: 271 91% 65%; /* purple */
-    --chart-5: 199 89% 48%; /* cyan */
-    --radius: 0.5rem;
+    --chart-1: 213 100% 52%;
+    --chart-2: 213 100% 62%;
+    --chart-3: 24 95% 53%;
+    --chart-4: 271 91% 65%;
+    --chart-5: 199 89% 48%;
+    --radius: 8px;
 
-    color-scheme: dark;
+    color-scheme: light;
   }
 
   @media (prefers-color-scheme: dark) {

@@ -58,7 +58,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+    <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] min-h-screen bg-background">
       {/* Overlay for mobile */}
       {mounted && !isDesktop && sidebarOpen && (
         <div
@@ -75,7 +75,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} isMobile={!isDesktop} />
 
       {/* Main Content */}
-      <main className="col-span-1 pt-16 bg-slate-950 min-h-screen">
+      <main className="col-span-1 pt-16 bg-background min-h-screen">
         <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
           {children}
         </div>

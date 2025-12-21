@@ -99,14 +99,14 @@ export function Sidebar({ isOpen, onClose, isMobile = false }: SidebarProps) {
 
       <aside
         className={cn(
-          'fixed top-16 left-0 h-[calc(100vh-4rem)] w-80 bg-slate-900 border-r border-slate-800 z-50 transition-transform duration-200 ease-out overflow-hidden',
+          'fixed top-14 left-0 h-[calc(100vh-3.5rem)] w-64 bg-white border-r border-border z-50 transition-transform duration-200 ease-out overflow-hidden',
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
       >
         <ScrollArea className="h-full w-full">
           <div className="space-y-1 p-4">
-            {/* Main Navigation Items */}
-            <div className="space-y-1 pb-4">
+            {/* Main Navigation */}
+            <div className="space-y-1 pb-3">
               {navItems
                 .filter((item) => !item.adminOnly || isAdmin || isModerator)
                 .map((item) => (
@@ -115,25 +115,25 @@ export function Sidebar({ isOpen, onClose, isMobile = false }: SidebarProps) {
                     href={item.href}
                     onClick={isMobile ? onClose : undefined}
                     className={cn(
-                      'flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all active:scale-[0.98]',
+                      'flex items-center space-x-3 px-3 py-2 rounded transition-all text-sm font-medium',
                       pathname === item.href
-                        ? 'bg-primary text-white font-medium shadow-lg shadow-primary/20'
-                        : 'text-slate-300 hover:bg-slate-800 hover:text-white active:bg-slate-700'
+                        ? 'bg-primary/10 text-primary'
+                        : 'text-foreground hover:bg-secondary active:bg-secondary'
                     )}
                   >
-                    <item.icon className="h-5 w-5 flex-shrink-0" />
-                    <span className="font-medium">{item.label}</span>
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.label}</span>
                   </Link>
                 ))}
             </div>
 
             {/* Divider */}
-            <div className="h-px bg-slate-700 my-4" />
+            <div className="h-px bg-border my-3" />
 
-            {/* Subjects/Faculties Section */}
+            {/* Subjects Section */}
             <div>
-              <h3 className="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                Faculties & Subjects
+              <h3 className="px-3 text-xs font-semibold text-muted uppercase tracking-wide mb-2 mt-2">
+                Subjects
               </h3>
 
               {subjects.map((subject) => (
@@ -141,55 +141,46 @@ export function Sidebar({ isOpen, onClose, isMobile = false }: SidebarProps) {
                   <button
                     onClick={() => toggleSubject(subject.id)}
                     className={cn(
-                      'w-full flex items-center justify-between px-4 py-2.5 rounded-lg transition-all text-left active:scale-[0.98]',
+                      'w-full flex items-center justify-between px-3 py-2 rounded transition-all text-sm',
                       expandedSubjects.has(subject.id)
-                        ? 'bg-slate-800 text-white font-semibold'
-                        : 'text-slate-300 hover:bg-slate-800/50 hover:text-white active:bg-slate-700'
+                        ? 'bg-secondary text-foreground font-medium'
+                        : 'text-foreground hover:bg-secondary'
                     )}
                   >
-                    <span className="font-semibold text-sm">{subject.name}</span>
+                    <span className="font-medium">{subject.name}</span>
                     <ChevronRight
                       className={cn(
-                        'h-4 w-4 transition-transform flex-shrink-0',
+                        'h-4 w-4 transition-transform',
                         expandedSubjects.has(subject.id) && 'rotate-90'
                       )}
                     />
                   </button>
 
                   {expandedSubjects.has(subject.id) && lessonsMap[subject.id] && (
-                    <div className="ml-4 mt-2 space-y-1 pb-2">
-                      {lessonsMap[subject.id].slice(0, 8).map((lesson) => (
+                    <div className="ml-3 mt-1 space-y-1 pb-2 border-l border-border">
+                      {lessonsMap[subject.id].slice(0, 6).map((lesson) => (
                         <Link
                           key={lesson.id}
                           href={`/lessons/${lesson.slug}`}
                           onClick={isMobile ? onClose : undefined}
                           className={cn(
-                            'block px-3 py-1.5 text-sm rounded-md transition-all active:scale-[0.98]',
+                            'block px-3 py-1.5 text-xs rounded transition-all line-clamp-2',
                             pathname === `/lessons/${lesson.slug}`
-                              ? 'bg-primary/20 text-primary font-medium'
-                              : 'text-slate-300 hover:bg-slate-800/50 hover:text-white active:bg-slate-700'
+                              ? 'bg-primary/10 text-primary font-medium'
+                              : 'text-muted hover:text-foreground hover:bg-secondary'
                           )}
                           title={lesson.title}
                         >
-                          <span className="line-clamp-2">{lesson.title}</span>
+                          {lesson.title}
                         </Link>
                       ))}
-                      {lessonsMap[subject.id].length > 8 && (
+                      {lessonsMap[subject.id].length > 6 && (
                         <Link
                           href={`/subjects/${subject.slug}`}
                           onClick={isMobile ? onClose : undefined}
-                          className="block px-3 py-1.5 text-sm text-primary hover:text-accent transition-colors font-medium"
+                          className="block px-3 py-1.5 text-xs text-primary hover:text-accent font-medium transition-colors"
                         >
-                          View all ({lessonsMap[subject.id].length}) →
-                        </Link>
-                      )}
-                      {lessonsMap[subject.id].length <= 8 && (
-                        <Link
-                          href={`/subjects/${subject.slug}`}
-                          onClick={isMobile ? onClose : undefined}
-                          className="block px-3 py-1.5 text-sm text-primary hover:text-accent transition-colors font-medium"
-                        >
-                          View all →
+                          View all ({lessonsMap[subject.id].length})
                         </Link>
                       )}
                     </div>
@@ -198,8 +189,7 @@ export function Sidebar({ isOpen, onClose, isMobile = false }: SidebarProps) {
               ))}
             </div>
 
-            {/* Footer Spacing */}
-            <div className="h-8" />
+            <div className="h-6" />
           </div>
         </ScrollArea>
       </aside>
