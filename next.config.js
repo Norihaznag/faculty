@@ -7,7 +7,7 @@ const nextConfig = {
     // Suppress Supabase realtime-js dynamic require warnings
     // These are third-party library warnings that don't affect functionality
     config.ignoreWarnings = [
-      ...config.ignoreWarnings,
+      ...(config.ignoreWarnings || []),
       {
         module: /@supabase\/realtime-js/,
         message: /Critical dependency: the request of a dependency is an expression/,
