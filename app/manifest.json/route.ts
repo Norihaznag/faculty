@@ -1,7 +1,7 @@
 export async function GET() {
   const manifest = {
-    name: 'EduHub - University Resource Platform',
-    short_name: 'EduHub',
+    name: 'ScholarHub - Free Educational Resources',
+    short_name: 'ScholarHub',
     description: 'Access comprehensive educational resources, tutorials, and study materials',
     start_url: '/',
     display: 'standalone',

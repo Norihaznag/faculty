@@ -3,6 +3,18 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  webpack: (config, { isServer }) => {
+    // Suppress Supabase realtime-js dynamic require warnings
+    // These are third-party library warnings that don't affect functionality
+    config.ignoreWarnings = [
+      ...config.ignoreWarnings,
+      {
+        module: /@supabase\/realtime-js/,
+        message: /Critical dependency: the request of a dependency is an expression/,
+      },
+    ];
+    return config;
+  },
   images: {
     minimumCacheTTL: 31536000, // 1 year cache for optimized images
     formats: ['image/avif', 'image/webp'],

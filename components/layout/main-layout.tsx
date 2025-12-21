@@ -11,9 +11,8 @@ type MainLayoutProps = {
 
 export function MainLayout({ children }: MainLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(true); // Default to true to match server
   const [mounted, setMounted] = useState(false);
-  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -24,24 +23,20 @@ export function MainLayout({ children }: MainLayoutProps) {
       const desktop = window.innerWidth >= 1024;
       setIsDesktop(desktop);
       
-      // Only set initial state once on mount
-      if (!initialized) {
-        if (desktop) {
-          // On desktop, restore saved state or default to open
-          const savedState = localStorage.getItem('sidebarOpen');
-          setSidebarOpen(savedState !== null ? savedState === 'true' : true);
-        } else {
-          // On mobile, default to closed
-          setSidebarOpen(false);
-        }
-        setInitialized(true);
+      if (desktop) {
+        // On desktop, restore saved state or default to open
+        const savedState = localStorage.getItem('sidebarOpen');
+        setSidebarOpen(savedState !== null ? savedState === 'true' : true);
+      } else {
+        // On mobile, default to closed
+        setSidebarOpen(false);
       }
     };
 
     checkDesktop();
     window.addEventListener('resize', checkDesktop);
     return () => window.removeEventListener('resize', checkDesktop);
-  }, [initialized]);
+  }, []);
 
   const toggleSidebar = () => {
     setSidebarOpen((prev) => {
@@ -64,7 +59,7 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   return (
     <div className="min-h-screen bg-white">
-      <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} isMobile={mounted && !isDesktop} />
+      <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} isMobile={!isDesktop} />
 
       <div className={cn('transition-all duration-200 ease-out', sidebarOpen ? 'lg:pl-72' : 'lg:pl-0')}>
         <Header onMenuClick={toggleSidebar} sidebarOpen={sidebarOpen} />

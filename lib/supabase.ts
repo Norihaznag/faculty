@@ -39,6 +39,7 @@ export type Lesson = {
   views: number;
   is_published: boolean;
   is_premium: boolean;
+  order_index: number;
   created_at: string;
   updated_at: string;
   subject?: Subject;

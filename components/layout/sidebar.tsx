@@ -54,7 +54,7 @@ export function Sidebar({ isOpen, onClose, isMobile = false }: SidebarProps) {
         .select('id, title, slug')
         .eq('subject_id', subjectId)
         .eq('is_published', true)
-        .order('created_at', { ascending: false })
+        .order('order_index', { ascending: true })
         .limit(10);
 
       if (error) throw error;

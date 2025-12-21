@@ -34,6 +34,8 @@ import { slugify } from '@/lib/utils/slug';
 import { Shield, CheckCircle, XCircle, Clock, Users, BookOpen, Trash2, UserX, UserCheck, Edit } from 'lucide-react';
 import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { supabase as supabaseClient, Subject, Lesson } from '@/lib/supabase';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -48,6 +50,13 @@ export default function AdminPage() {
   const [stats, setStats] = useState({ totalUsers: 0, totalLessons: 0, pendingUploads: 0 });
   const [allUsers, setAllUsers] = useState<Profile[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+  const [showNewSubjectDialog, setShowNewSubjectDialog] = useState(false);
+  const [newSubjectName, setNewSubjectName] = useState('');
+  const [newSubjectDescription, setNewSubjectDescription] = useState('');
+  const [subjectsLoading, setSubjectsLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
   const [newRole, setNewRole] = useState<'student' | 'teacher' | 'moderator' | 'admin'>('student');
@@ -58,11 +67,12 @@ export default function AdminPage() {
       router.push('/');
     } else if (profile?.role === 'admin' || profile?.role === 'moderator') {
       fetchData();
+      fetchSubjects();
       if (profile?.role === 'admin') {
         fetchUsers();
       }
     }
-  }, [user, profile, authLoading]);
+  }, [user, profile, authLoading, router]);
 
   const fetchData = async () => {
     try {
@@ -138,6 +148,106 @@ export default function AdminPage() {
       setAllUsers([]);
     } finally {
       setUsersLoading(false);
+    }
+  };
+
+  const fetchSubjects = async () => {
+    try {
+      setSubjectsLoading(true);
+      const { data, error } = await supabase
+        .from('subjects')
+        .select('*')
+        .order('order_index', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching subjects:', error);
+        setSubjects([]);
+      } else {
+        setSubjects(data || []);
+      }
+    } catch (error) {
+      console.error('Error in fetchSubjects:', error);
+      setSubjects([]);
+    } finally {
+      setSubjectsLoading(false);
+    }
+  };
+
+  const fetchLessonsForSubject = async (subjectId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('lessons')
+        .select('*')
+        .eq('subject_id', subjectId)
+        .order('order_index', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching lessons:', error);
+        setLessons([]);
+      } else {
+        setLessons(data || []);
+      }
+    } catch (error) {
+      console.error('Error in fetchLessonsForSubject:', error);
+      setLessons([]);
+    }
+  };
+
+  const handleSelectSubject = async (subject: Subject) => {
+    setSelectedSubject(subject);
+    await fetchLessonsForSubject(subject.id);
+  };
+
+  const handleCreateSubject = async () => {
+    if (!newSubjectName.trim()) {
+      alert('Please enter a subject name');
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      const subjectSlug = slugify(newSubjectName);
+      
+      const { error } = await supabase.from('subjects').insert({
+        name: newSubjectName,
+        slug: subjectSlug,
+        description: newSubjectDescription,
+        order_index: subjects.length,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      setNewSubjectName('');
+      setNewSubjectDescription('');
+      setShowNewSubjectDialog(false);
+      await fetchSubjects();
+    } catch (error) {
+      console.error('Error creating subject:', error);
+      alert('Failed to create subject. Please try again.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleUpdateLessonOrder = async (lessonId: string, newOrder: number) => {
+    try {
+      const { error } = await supabase
+        .from('lessons')
+        .update({ order_index: newOrder })
+        .eq('id', lessonId);
+
+      if (error) {
+        throw error;
+      }
+
+      if (selectedSubject) {
+        await fetchLessonsForSubject(selectedSubject.id);
+      }
+    } catch (error) {
+      console.error('Error updating lesson order:', error);
+      alert('Failed to update lesson order.');
     }
   };
 
@@ -261,11 +371,15 @@ export default function AdminPage() {
 
       // ROLLBACK: Delete orphaned subject if created
       if (newSubjectId) {
-        await supabase
-          .from('subjects')
-          .delete()
-          .eq('id', newSubjectId)
-          .catch(err => console.error('Rollback failed:', err));
+        try {
+          await supabase
+            .from('subjects')
+            .delete()
+            .eq('id', newSubjectId);
+          console.log('Rollback successful');
+        } catch (err) {
+          console.error('Rollback failed:', err);
+        }
       }
 
       // Show error to user
@@ -735,32 +849,158 @@ export default function AdminPage() {
 
             {isAdmin && (
               <TabsContent value="faculties" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Manage Faculties</CardTitle>
-                    <CardDescription>
-                      View and manage all educational faculties. Faculties are created by users when uploading content with new faculty names. You can manage them here to ensure quality and organization.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <p className="text-sm text-muted-foreground">
-                        Faculties are automatically generated from lesson content uploads. Use the upload form to create new faculties by entering a faculty name.
-                      </p>
-                      <Alert>
-                        <BookOpen className="h-4 w-4" />
-                        <AlertDescription>
-                          To manage faculties, go to the Subjects management in your Supabase dashboard or create new faculties through the content upload system.
-                        </AlertDescription>
-                      </Alert>
-                    </div>
-                  </CardContent>
-                </Card>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="text-xl font-semibold">Manage Faculties</h2>
+                    <p className="text-sm text-muted-foreground">Create, organize, and manage educational faculties with lessons</p>
+                  </div>
+                  <Button onClick={() => setShowNewSubjectDialog(true)}>
+                    + New Faculty
+                  </Button>
+                </div>
+
+                {subjectsLoading ? (
+                  <Card>
+                    <CardContent className="pt-6">
+                      <p className="text-center text-muted-foreground">Loading faculties...</p>
+                    </CardContent>
+                  </Card>
+                ) : subjects.length === 0 ? (
+                  <Card>
+                    <CardContent className="pt-6">
+                      <p className="text-center text-muted-foreground">No faculties yet. Create one to get started.</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {subjects.map((subject) => (
+                      <Card 
+                        key={subject.id}
+                        className="cursor-pointer hover:shadow-lg transition-shadow"
+                        onClick={() => handleSelectSubject(subject)}
+                      >
+                        <CardHeader>
+                          <CardTitle className="text-lg">{subject.name}</CardTitle>
+                          <CardDescription>{subject.description || 'No description'}</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-sm text-muted-foreground">
+                            Order: <Badge>{subject.order_index}</Badge>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+
+                {selectedSubject && (
+                  <Card className="mt-6 border-2 border-blue-200 bg-blue-50">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle>{selectedSubject.name} - Lessons</CardTitle>
+                          <CardDescription>Manage lessons for this faculty in W3Schools order</CardDescription>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => setSelectedSubject(null)}
+                        >
+                          ✕
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {lessons.length === 0 ? (
+                        <p className="text-center text-muted-foreground py-4">No lessons in this faculty yet</p>
+                      ) : (
+                        <div className="space-y-3">
+                          {lessons.map((lesson, idx) => (
+                            <div key={lesson.id} className="flex items-center gap-3 p-3 bg-white rounded border">
+                              <div className="flex-1">
+                                <p className="font-medium">{lesson.title}</p>
+                                <p className="text-sm text-muted-foreground">Order: {lesson.order_index}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => handleUpdateLessonOrder(lesson.id, Math.max(0, lesson.order_index - 1))}
+                                  disabled={lesson.order_index === 0}
+                                >
+                                  ↑
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => handleUpdateLessonOrder(lesson.id, lesson.order_index + 1)}
+                                  disabled={lesson.order_index === lessons.length - 1}
+                                >
+                                  ↓
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
               </TabsContent>
             )}
           </TabsContent>
         </Tabs>
       </div>
+
+      <Dialog open={showNewSubjectDialog} onOpenChange={setShowNewSubjectDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Faculty</DialogTitle>
+            <DialogDescription>
+              Add a new faculty to your platform. You can add lessons to it later.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="subject-name">Faculty Name</Label>
+              <Input
+                id="subject-name"
+                placeholder="e.g., Computer Science, Mathematics, Biology"
+                value={newSubjectName}
+                onChange={(e) => setNewSubjectName(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleCreateSubject()}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="subject-desc">Description (Optional)</Label>
+              <Textarea
+                id="subject-desc"
+                placeholder="Brief description of this faculty..."
+                value={newSubjectDescription}
+                onChange={(e) => setNewSubjectDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowNewSubjectDialog(false)}
+              disabled={actionLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateSubject}
+              disabled={actionLoading || !newSubjectName.trim()}
+            >
+              {actionLoading ? 'Creating...' : 'Create Faculty'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!selectedUpload} onOpenChange={() => setSelectedUpload(null)}>
         <DialogContent>
@@ -814,7 +1054,7 @@ export default function AdminPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Upload</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{uploadToDelete?.title}"? This action cannot be undone.
+              Are you sure you want to delete &quot;{uploadToDelete?.title}&quot;? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

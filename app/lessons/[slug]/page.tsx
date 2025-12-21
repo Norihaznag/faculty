@@ -70,7 +70,7 @@ export default async function LessonPage({ params }: Props) {
       .select('*, subject:subjects(*), author:profiles(*)')
       .eq('subject_id', lesson.subject_id)
       .eq('is_published', true)
-      .order('created_at', { ascending: true });
+      .order('order_index', { ascending: true });
 
     if (lessonsError) {
       console.error('Error fetching adjacent lessons:', lessonsError);

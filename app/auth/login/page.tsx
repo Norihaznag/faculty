@@ -40,7 +40,7 @@ export default function LoginPage() {
         <div className="text-center">
           <Link href="/" className="inline-flex items-center space-x-2 mb-8">
             <BookOpen className="h-8 w-8" />
-            <span className="font-bold text-2xl">EduHub</span>
+            <span className="font-bold text-2xl">ScholarHub</span>
           </Link>
         </div>
 
