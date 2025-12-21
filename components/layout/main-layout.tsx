@@ -60,7 +60,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
       {/* Overlay for mobile */}
-      {mounted && isMobile && sidebarOpen && (
+      {mounted && !isDesktop && sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/60 z-40 lg:hidden"
           onClick={closeSidebar}
