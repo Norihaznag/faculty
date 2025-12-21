@@ -32,14 +32,14 @@ export function LessonHeader({
   const readingTime = Math.ceil((title.length + 500) / 200); // Rough estimate
 
   return (
-    <header className={cn('mb-12 pb-8 border-b border-slate-800', className)}>
+    <header className={cn('mb-12 pb-8 border-b border-border', className)}>
       {/* Title */}
-      <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 leading-tight">
+      <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4 leading-tight">
         {title}
       </h1>
 
       {/* Metadata Row */}
-      <div className="flex flex-wrap items-center gap-6 text-slate-400 text-sm mb-6">
+      <div className="flex flex-wrap items-center gap-6 text-muted text-sm mb-6">
         {author?.full_name && (
           <div className="flex items-center gap-2">
             <User className="h-4 w-4 text-primary" />

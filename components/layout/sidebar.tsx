@@ -178,7 +178,7 @@ export function Sidebar({ isOpen, onClose, isMobile = false }: SidebarProps) {
                         <Link
                           href={`/subjects/${subject.slug}`}
                           onClick={isMobile ? onClose : undefined}
-                          className="block px-3 py-1.5 text-xs text-primary hover:text-accent font-medium transition-colors"
+                          className="block px-3 py-1.5 text-xs text-primary hover:text-blue-600 font-medium transition-colors"
                         >
                           View all ({lessonsMap[subject.id].length})
                         </Link>

@@ -253,7 +253,7 @@ export function Header({ onMenuClick, sidebarOpen = false }: HeaderProps) {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button variant="default" size="sm" asChild className="bg-primary hover:bg-accent text-white">
+            <Button variant="default" size="sm" asChild className="bg-primary hover:bg-blue-600 text-white">
               <Link href="/auth/login">
                 <LogIn className="mr-2 h-4 w-4" />
                 Sign In

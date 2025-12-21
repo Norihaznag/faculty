@@ -119,7 +119,7 @@ export function LessonView({ lesson }: LessonViewProps) {
                   <Badge
                     key={tag.id}
                     variant="secondary"
-                    className="bg-sky-500 text-slate-900"
+                    className="bg-sky-500 text-white"
                   >
                     {tag.name}
                   </Badge>

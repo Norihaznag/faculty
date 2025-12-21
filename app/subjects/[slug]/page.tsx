@@ -104,7 +104,7 @@ export default function SubjectPage() {
                           {lesson.title}
                         </CardTitle>
                         {lesson.is_premium && (
-                          <Badge variant="secondary" className="bg-amber-400 text-slate-900">
+                          <Badge variant="secondary" className="bg-amber-400 text-foreground">
                             Premium
                           </Badge>
                         )}
