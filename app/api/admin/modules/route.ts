@@ -24,7 +24,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(modules);
   } catch (error) {
-    console.error('Error fetching modules:', error);
     return NextResponse.json(
       { error: 'Failed to fetch modules' },
       { status: 500 }
@@ -70,10 +69,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(module, { status: 201 });
   } catch (error) {
-    console.error('Error creating module:', error);
     return NextResponse.json(
       { error: 'Failed to create module' },
       { status: 500 }
     );
   }
 }
+

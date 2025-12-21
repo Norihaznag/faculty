@@ -66,7 +66,7 @@ export function LessonView({ lesson }: LessonViewProps) {
         setIsBookmarked(true);
       }
     } catch (error) {
-      console.error('Error toggling bookmark:', error);
+      // Bookmark toggle failed
     } finally {
       setBookmarkLoading(false);
     }
@@ -200,3 +200,4 @@ export function LessonView({ lesson }: LessonViewProps) {
     </MainLayout>
   );
 }
+

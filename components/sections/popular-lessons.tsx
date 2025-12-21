@@ -52,3 +52,4 @@ export default function PopularLessonsSection({ lessons }: { lessons: Lesson[] }
     </section>
   );
 }
+

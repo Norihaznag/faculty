@@ -119,3 +119,4 @@ export type Resource = {
   author?: Profile;
   tags?: Tag[];
 };
+

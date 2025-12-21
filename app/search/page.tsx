@@ -39,7 +39,6 @@ export default function SearchPage() {
 
       setLessons(data || []);
     } catch (error) {
-      console.error('Search error:', error);
       setLessons([]);
     } finally {
       setLoading(false);
@@ -114,3 +113,4 @@ export default function SearchPage() {
     </MainLayout>
   );
 }
+

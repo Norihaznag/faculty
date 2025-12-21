@@ -50,10 +50,6 @@ export default async function LessonPage({ params }: Props) {
     .update({ views: (lesson.views || 0) + 1 })
     .eq('id', lesson.id);
 
-  if (viewError) {
-    console.error('Error incrementing view count:', viewError);
-  }
-
   // Fetch tags
   const { data: tags } = await supabase
     .from('lesson_tags')
@@ -73,7 +69,7 @@ export default async function LessonPage({ params }: Props) {
       .order('order_index', { ascending: true });
 
     if (lessonsError) {
-      console.error('Error fetching adjacent lessons:', lessonsError);
+      // Silently fail
     }
 
     if (allLessons && allLessons.length > 0) {
@@ -85,8 +81,6 @@ export default async function LessonPage({ params }: Props) {
         nextLesson = allLessons[currentIndex + 1];
       }
     }
-  } else {
-    console.warn(`Lesson "${lesson.title}" has no subject_id assigned`);
   }
 
   const lessonWithTags = {

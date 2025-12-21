@@ -8,8 +8,8 @@ export default function OfflinePage() {
   useEffect(() => {
     // Register service worker
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch((err) => {
-        console.error('Service Worker registration failed:', err);
+      navigator.serviceWorker.register('/sw.js').catch(() => {
+        // Service Worker registration failed
       });
     }
   }, []);
@@ -28,3 +28,4 @@ export default function OfflinePage() {
     </div>
   );
 }
+

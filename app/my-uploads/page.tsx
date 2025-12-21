@@ -50,7 +50,6 @@ export default function MyUploadsPage() {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching uploads:', error);
         setUploads([]);
         return;
       }
@@ -76,7 +75,6 @@ export default function MyUploadsPage() {
       );
       setUploads(uploadsWithRelations);
     } catch (error) {
-      console.error('Error in fetchUploads:', error);
       setUploads([]);
     } finally {
       setLoading(false);
@@ -93,7 +91,6 @@ export default function MyUploadsPage() {
       .eq('id', uploadToDelete.id);
 
     if (error) {
-      console.error('Error deleting upload:', error);
       alert('Failed to delete upload. Please try again.');
     } else {
       await fetchUploads();
@@ -331,4 +328,5 @@ export default function MyUploadsPage() {
     </MainLayout>
   );
 }
+
 

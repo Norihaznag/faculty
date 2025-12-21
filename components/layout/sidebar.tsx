@@ -41,7 +41,7 @@ export function Sidebar({ isOpen, onClose, isMobile = false }: SidebarProps) {
         setSubjects(data);
       }
     } catch (error) {
-      console.error('Error fetching subjects:', error);
+      // Silently fail
     }
   };
 
@@ -63,7 +63,7 @@ export function Sidebar({ isOpen, onClose, isMobile = false }: SidebarProps) {
         setLessonsMap(prev => ({ ...prev, [subjectId]: data }));
       }
     } catch (error) {
-      console.error('Error fetching lessons for subject:', error);
+      // Silently fail
     }
   };
 
@@ -201,3 +201,4 @@ export function Sidebar({ isOpen, onClose, isMobile = false }: SidebarProps) {
     </>
   );
 }
+

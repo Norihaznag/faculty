@@ -76,3 +76,4 @@ export function prefetchLink(url: string) {
   link.as = 'document';
   document.head.appendChild(link);
 }
+

@@ -52,3 +52,4 @@ export default function RecentLessonsSection({ lessons }: { lessons: Lesson[] })
     </section>
   );
 }
+

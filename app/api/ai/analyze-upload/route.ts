@@ -186,7 +186,6 @@ Content: ${text.slice(0, 2000)}`;
     return parseAIResponse(data, text);
   } catch (error: any) {
     // Fallback to simple text analysis if AI fails
-    console.log('Free AI API unavailable, using smart fallback:', error?.message || error);
     return {
       tags: extractSmartTags(text),
       seoTitle: extractSeoTitle(text),
@@ -283,12 +282,12 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
   } catch (error: any) {
-    console.error('AI analyze-upload error:', error);
     return NextResponse.json(
       { error: error?.message || 'Failed to analyze file with AI' },
       { status: 500 }
     );
   }
 }
+
 
 

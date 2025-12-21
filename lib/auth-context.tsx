@@ -97,7 +97,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     } catch (error) {
       if (isMountedRef) {  // ← Only set error state if still mounted
-        console.error('Error fetching profile:', error);
         setAuthError(error instanceof Error ? error.message : 'Failed to fetch profile');
         setLoading(false);
       }
@@ -153,3 +152,4 @@ export function useAuth() {
   }
   return context;
 }
+

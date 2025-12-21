@@ -46,7 +46,6 @@ export function LessonViewW3Style({ lesson, previousLesson, nextLesson }: Lesson
 
       setIsBookmarked(!!data);
     } catch (error) {
-      console.error('Error checking bookmark:', error);
     }
   };
 
@@ -75,7 +74,6 @@ export function LessonViewW3Style({ lesson, previousLesson, nextLesson }: Lesson
         setIsBookmarked(true);
       }
     } catch (error) {
-      console.error('Error toggling bookmark:', error);
       setIsBookmarked(previousState);  // ← ROLLBACK on error
     } finally {
       setBookmarkLoading(false);
@@ -302,3 +300,4 @@ export function LessonViewW3Style({ lesson, previousLesson, nextLesson }: Lesson
     </div>
   );
 }
+

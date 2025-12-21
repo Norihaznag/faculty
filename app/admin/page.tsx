@@ -83,12 +83,9 @@ export default function AdminPage() {
         .order('created_at', { ascending: false });
 
       if (uploadsRes.error) {
-        console.error('Error fetching uploads:', uploadsRes.error);
         setUploads([]);
         return;
       }
-
-      console.log('Fetched uploads:', uploadsRes.data?.length, uploadsRes.data);
 
       // Fetch related data for each upload
       const uploadsWithRelations = await Promise.all(
@@ -124,7 +121,6 @@ export default function AdminPage() {
         pendingUploads: uploadsWithRelations.filter((u) => u.status === 'pending').length,
       });
     } catch (error) {
-      console.error('Error in fetchData:', error);
       setUploads([]);
     }
   };
@@ -138,13 +134,11 @@ export default function AdminPage() {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching users:', error);
         setAllUsers([]);
       } else {
         setAllUsers(data || []);
       }
     } catch (error) {
-      console.error('Error in fetchUsers:', error);
       setAllUsers([]);
     } finally {
       setUsersLoading(false);
@@ -160,13 +154,11 @@ export default function AdminPage() {
         .order('order_index', { ascending: true });
 
       if (error) {
-        console.error('Error fetching subjects:', error);
         setSubjects([]);
       } else {
         setSubjects(data || []);
       }
     } catch (error) {
-      console.error('Error in fetchSubjects:', error);
       setSubjects([]);
     } finally {
       setSubjectsLoading(false);
@@ -182,13 +174,11 @@ export default function AdminPage() {
         .order('order_index', { ascending: true });
 
       if (error) {
-        console.error('Error fetching lessons:', error);
         setLessons([]);
       } else {
         setLessons(data || []);
       }
     } catch (error) {
-      console.error('Error in fetchLessonsForSubject:', error);
       setLessons([]);
     }
   };
@@ -224,7 +214,6 @@ export default function AdminPage() {
       setShowNewSubjectDialog(false);
       await fetchSubjects();
     } catch (error) {
-      console.error('Error creating subject:', error);
       alert('Failed to create subject. Please try again.');
     } finally {
       setActionLoading(false);
@@ -246,7 +235,6 @@ export default function AdminPage() {
         await fetchLessonsForSubject(selectedSubject.id);
       }
     } catch (error) {
-      console.error('Error updating lesson order:', error);
       alert('Failed to update lesson order.');
     }
   };
@@ -261,7 +249,6 @@ export default function AdminPage() {
       .eq('id', selectedUser.id);
 
     if (error) {
-      console.error('Error updating role:', error);
       alert('Failed to update role. Please try again.');
     } else {
       await fetchUsers();
@@ -278,7 +265,6 @@ export default function AdminPage() {
       .eq('id', user.id);
 
     if (error) {
-      console.error('Error updating user status:', error);
       alert('Failed to update user status. Please try again.');
     } else {
       await fetchUsers();
@@ -367,7 +353,6 @@ export default function AdminPage() {
       setAdminNotes('');
 
     } catch (error) {
-      console.error('Error approving upload:', error);
 
       // ROLLBACK: Delete orphaned subject if created
       if (newSubjectId) {
@@ -376,9 +361,7 @@ export default function AdminPage() {
             .from('subjects')
             .delete()
             .eq('id', newSubjectId);
-          console.log('Rollback successful');
         } catch (err) {
-          console.error('Rollback failed:', err);
         }
       }
 
@@ -418,7 +401,6 @@ export default function AdminPage() {
       .eq('id', uploadToDelete.id);
 
     if (error) {
-      console.error('Error deleting upload:', error);
       alert('Failed to delete upload. Please try again.');
     } else {
       await fetchData();
@@ -1122,3 +1104,5 @@ export default function AdminPage() {
     </MainLayout>
   );
 }
+
+

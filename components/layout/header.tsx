@@ -96,7 +96,6 @@ export function Header({ onMenuClick, sidebarOpen = false }: HeaderProps) {
         });
         setShowSuggestions(true);
       } catch (error) {
-        console.error('Search error:', error);
         setSuggestions({ lessons: [], subjects: [] });
       } finally {
         setLoadingSuggestions(false);
@@ -285,3 +284,4 @@ export function Header({ onMenuClick, sidebarOpen = false }: HeaderProps) {
     </header>
   );
 }
+
