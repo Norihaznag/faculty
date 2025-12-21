@@ -119,38 +119,49 @@ export function Header({ onMenuClick, sidebarOpen = false }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-30 w-full border-b border-border/40 bg-white/95 backdrop-blur-sm supports-[backdrop-filter]:bg-white/80">
-      <div className="flex h-14 items-center px-4 gap-3">
+    <header className="sticky top-0 z-40 w-full border-b border-border bg-slate-950/95 backdrop-blur-sm supports-[backdrop-filter]:bg-slate-950/80">
+      <div className="flex h-16 items-center px-4 gap-4">
+        {/* Menu Toggle */}
         <Button
           variant="ghost"
           size="icon"
           onClick={onMenuClick}
           aria-label="Toggle sidebar"
-          className="shrink-0"
+          className="shrink-0 lg:hidden hover:bg-white/10"
         >
-          <Menu className="h-5 w-5" />
+          <Menu className="h-5 w-5 text-white" />
         </Button>
 
+        {/* Logo (Desktop Only) */}
+        <Link 
+          href="/" 
+          className="hidden lg:flex items-center space-x-2 text-white font-bold text-lg hover:text-primary transition-colors"
+        >
+          <BookOpen className="h-6 w-6 text-primary" />
+          <span>EduHub</span>
+        </Link>
+
+        {/* Search */}
         <div className="flex-1 max-w-2xl relative">
           <form onSubmit={handleSearch}>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder="Search lessons, subjects, topics..."
+                placeholder="Search lessons, subjects..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => {
                   if (searchQuery.trim()) setShowSuggestions(true);
                 }}
-                className="pl-9 w-full bg-white border-border/60 focus:border-primary/50 focus:ring-1"
+                className="pl-9 w-full bg-slate-800 border-slate-700 text-white placeholder:text-slate-400 focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
                 aria-label="Search"
               />
             </div>
           </form>
 
           {showSuggestions && (suggestions.lessons.length > 0 || suggestions.subjects.length > 0 || loadingSuggestions) && (
-            <div className="absolute mt-1 w-full rounded-lg border border-border/60 bg-white shadow-sm z-50">
+            <div className="absolute mt-2 w-full rounded-lg border border-slate-700 bg-slate-900 shadow-xl z-50">
               <div className="p-1 space-y-0.5 max-h-80 overflow-y-auto smooth-scroll">
                 {loadingSuggestions && (
                   <p className="text-xs text-muted-foreground px-2 py-1">Loading...</p>
@@ -158,7 +169,7 @@ export function Header({ onMenuClick, sidebarOpen = false }: HeaderProps) {
 
                 {suggestions.lessons.length > 0 && (
                   <div>
-                    <p className="px-2 py-1 text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                    <p className="px-2 py-1 text-xs font-semibold text-primary flex items-center gap-1">
                       <BookOpen className="h-3 w-3" /> Lessons
                     </p>
                     {suggestions.lessons.map((lesson) => (
@@ -166,10 +177,10 @@ export function Header({ onMenuClick, sidebarOpen = false }: HeaderProps) {
                         key={lesson.id}
                         type="button"
                         onClick={() => handleSelectLesson(lesson.slug)}
-                        className="w-full text-left px-3 py-2 rounded-md hover:bg-muted/50 transition-colors active:bg-muted"
+                        className="w-full text-left px-3 py-2 rounded-md hover:bg-slate-800 transition-colors text-white active:bg-slate-700"
                       >
                         <div className="text-sm font-medium">{lesson.title}</div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-xs text-slate-400">
                           {lesson.subject?.name ? `Faculty: ${lesson.subject.name}` : 'Lesson'}
                         </div>
                       </button>
@@ -179,7 +190,7 @@ export function Header({ onMenuClick, sidebarOpen = false }: HeaderProps) {
 
                 {suggestions.subjects.length > 0 && (
                   <div>
-                    <p className="px-2 py-1 text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                    <p className="px-2 py-1 text-xs font-semibold text-primary flex items-center gap-1">
                       <Tags className="h-3 w-3" /> Faculties
                     </p>
                     {suggestions.subjects.map((subject) => (
@@ -187,10 +198,10 @@ export function Header({ onMenuClick, sidebarOpen = false }: HeaderProps) {
                         key={subject.id}
                         type="button"
                         onClick={() => handleSelectSubject(subject.slug)}
-                        className="w-full text-left px-3 py-2 rounded-md hover:bg-muted/50 transition-colors active:bg-muted"
+                        className="w-full text-left px-3 py-2 rounded-md hover:bg-slate-800 transition-colors text-white active:bg-slate-700"
                       >
                         <div className="text-sm font-medium">{subject.name}</div>
-                        <div className="text-xs text-muted-foreground">Faculty</div>
+                        <div className="text-xs text-slate-400">Faculty</div>
                       </button>
                     ))}
                   </div>
@@ -206,43 +217,44 @@ export function Header({ onMenuClick, sidebarOpen = false }: HeaderProps) {
           )}
         </div>
 
+        {/* User Menu */}
         <div className="flex items-center gap-2">
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="User menu">
-                  <User className="h-5 w-5" />
+                <Button variant="ghost" size="icon" className="hover:bg-white/10" aria-label="User menu">
+                  <User className="h-5 w-5 text-white" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-56 bg-slate-900 border-slate-700">
                 <div className="px-2 py-1.5">
-                  <p className="text-sm font-medium">{profile?.full_name}</p>
-                  <p className="text-xs text-muted-foreground">{profile?.email}</p>
-                  <p className="text-xs text-muted-foreground capitalize mt-1">
-                    Role: {profile?.role}
+                  <p className="text-sm font-medium text-white">{profile?.full_name}</p>
+                  <p className="text-xs text-slate-400">{profile?.email}</p>
+                  <p className="text-xs text-primary capitalize mt-1 font-medium">
+                    {profile?.role}
                   </p>
                 </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
+                <DropdownMenuSeparator className="bg-slate-700" />
+                <DropdownMenuItem asChild className="text-white focus:bg-slate-800 cursor-pointer">
                   <Link href="/bookmarks">My Bookmarks</Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
+                <DropdownMenuItem asChild className="text-white focus:bg-slate-800 cursor-pointer">
                   <Link href="/upload">Upload Content</Link>
                 </DropdownMenuItem>
                 {profile?.role === 'admin' && (
-                  <DropdownMenuItem asChild>
+                  <DropdownMenuItem asChild className="text-white focus:bg-slate-800 cursor-pointer">
                     <Link href="/admin">Admin Dashboard</Link>
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>
+                <DropdownMenuSeparator className="bg-slate-700" />
+                <DropdownMenuItem onClick={handleSignOut} className="text-red-400 focus:bg-slate-800 cursor-pointer">
                   <LogOut className="mr-2 h-4 w-4" />
                   Sign Out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button variant="default" size="sm" asChild>
+            <Button variant="default" size="sm" asChild className="bg-primary hover:bg-accent text-white">
               <Link href="/auth/login">
                 <LogIn className="mr-2 h-4 w-4" />
                 Sign In

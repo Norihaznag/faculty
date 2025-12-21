@@ -13,12 +13,12 @@ const inter = Inter({
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://scholarhub.com';
 
 export const metadata: Metadata = {
-  title: 'ScholarHub | Free Educational Resources for Faculties & Schools',
-  description: 'Open-source platform for PDFs, books, lessons, modules, and educational materials. Access quality content from faculties and schools worldwide.',
+  title: 'EduHub | Professional Educational Resources Platform',
+  description: 'Discover quality educational content, lessons, and study materials from faculties and schools. Learn from expertly curated resources on various subjects and topics.',
   metadataBase: new URL(siteUrl),
-  authors: [{ name: 'ScholarHub' }],
-  creator: 'ScholarHub',
-  publisher: 'ScholarHub',
+  authors: [{ name: 'EduHub' }],
+  creator: 'EduHub',
+  publisher: 'EduHub',
   formatDetection: {
     telephone: false,
     email: false,
@@ -42,29 +42,29 @@ export const metadata: Metadata = {
     },
   ],
   manifest: '/manifest.json',
-  keywords: ['education', 'university', 'faculties', 'schools', 'resources', 'learning', 'tutorials', 'study materials', 'modules', 'books', 'pdfs'],
+  keywords: ['education', 'university', 'faculties', 'schools', 'resources', 'learning', 'tutorials', 'study materials', 'lessons', 'courses'],
   openGraph: {
     type: 'website',
     locale: 'en_US',
     url: siteUrl,
-    siteName: 'ScholarHub',
-    title: 'ScholarHub | Free Educational Resources',
-    description: 'Open-source platform for educational content from faculties and schools worldwide.',
+    siteName: 'EduHub',
+    title: 'EduHub | Professional Educational Resources',
+    description: 'Quality educational content and lessons from faculties and schools worldwide.',
     images: [
       {
         url: `${siteUrl}/og-image.png`,
         width: 1200,
         height: 630,
-        alt: 'ScholarHub',
+        alt: 'EduHub',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'ScholarHub | Free Educational Resources',
-    description: 'Open-source platform for educational content from faculties and schools worldwide.',
+    title: 'EduHub | Professional Educational Resources',
+    description: 'Quality educational content and lessons from faculties and schools worldwide.',
     images: [`${siteUrl}/og-image.png`],
-    creator: '@scholarhub',
+    creator: '@eduhub',
   },
   robots: {
     index: true,
@@ -88,7 +88,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
+    <html lang="en" className="scroll-smooth dark" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
@@ -96,8 +96,8 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-        <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#161616" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#161616" media="(prefers-color-scheme: light)" />
         
         {/* JSON-LD Structured Data */}
         <Script
@@ -108,11 +108,11 @@ export default function RootLayout({
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'EducationalOrganization',
-              name: 'ScholarHub',
-              description: 'Open-source platform for educational content from faculties and schools',
+              name: 'EduHub',
+              description: 'Professional educational platform for faculty resources, lessons, and learning materials',
               url: siteUrl,
               sameAs: [
-                'https://twitter.com/scholarhub',
+                'https://twitter.com/eduhub',
               ],
             }),
           }}
@@ -122,7 +122,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
-      <body className={`${inter.className} bg-white`}>
+      <body className={`${inter.className} bg-slate-950 text-slate-50`}>
         <Providers>{children}</Providers>
         
         {/* Service Worker Registration */}

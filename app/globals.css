@@ -4,111 +4,95 @@
 
 @layer base {
   :root {
-    /* Clean white Expo mobile theme - minimalist and professional */
-    --background: 0 0% 100%; /* pure white */
-    --foreground: 0 0% 3.9%; /* near-black text for contrast */
+    /* EduHub Dark Theme - W3Schools-style professional */
+    --background: 0 0% 9%; /* near-black background #161616 */
+    --foreground: 0 0% 95%; /* near-white text #f2f2f2 */
 
-    --card: 0 0% 100%; /* white cards */
-    --card-foreground: 0 0% 3.9%;
+    --card: 0 0% 12%; /* dark card background #1f1f1f */
+    --card-foreground: 0 0% 95%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 221 83% 53%; /* clean blue - Expo's signature color */
+    --primary: 147 78% 38%; /* W3Schools educational green #0d7f3a */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 96.1%; /* light gray for secondary elements */
-    --secondary-foreground: 0 0% 9%;
+    --secondary: 0 0% 20%; /* dark gray for secondary */
+    --secondary-foreground: 0 0% 95%;
 
-    --muted: 0 0% 96.1%; /* very light gray */
-    --muted-foreground: 0 0% 45.1%;
+    --muted: 0 0% 30%; /* medium gray for muted text #4d4d4d */
+    --muted-foreground: 0 0% 70%;
 
-    --accent: 0 0% 96.1%; /* subtle accent */
-    --accent-foreground: 0 0% 9%;
+    --accent: 147 78% 48%; /* bright green for hover/active #1bb357 */
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%; /* clean red for errors */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 89.8%; /* light gray borders */
-    --input: 0 0% 89.8%;
-    --ring: 221 83% 53%; /* focus ring matches primary */
+    --border: 0 0% 20%; /* dark gray borders #333333 */
+    --input: 0 0% 20%;
+    --ring: 147 78% 38%; /* focus ring matches primary green */
 
-    --chart-1: 221 83% 53%;
-    --chart-2: 142 76% 36%;
-    --chart-3: 24 95% 53%;
-    --chart-4: 271 91% 65%;
-    --chart-5: 199 89% 48%;
+    --chart-1: 147 78% 38%; /* green */
+    --chart-2: 147 78% 48%; /* bright green */
+    --chart-3: 24 95% 53%; /* orange */
+    --chart-4: 271 91% 65%; /* purple */
+    --chart-5: 199 89% 48%; /* cyan */
     --radius: 0.5rem;
 
-    color-scheme: light;
+    color-scheme: dark;
   }
 
   @media (prefers-color-scheme: dark) {
     :root {
-      color-scheme: light dark;
+      color-scheme: dark;
     }
 
     .dark {
-      /* Optional dark mode - kept minimal */
-      --background: 0 0% 3.9%;
-      --foreground: 0 0% 98%;
-
-      --card: 0 0% 3.9%;
-      --card-foreground: 0 0% 98%;
-
-      --popover: 0 0% 3.9%;
-      --popover-foreground: 0 0% 98%;
-
-      --primary: 221 83% 53%;
-      --primary-foreground: 0 0% 98%;
-
-      --secondary: 0 0% 14.9%;
-      --secondary-foreground: 0 0% 98%;
-
-      --muted: 0 0% 14.9%;
-      --muted-foreground: 0 0% 63.9%;
-
-      --accent: 0 0% 14.9%;
-      --accent-foreground: 0 0% 98%;
-
+      /* Same as light theme since we defaulted to dark */
+      --background: 0 0% 9%;
+      --foreground: 0 0% 95%;
+      --card: 0 0% 12%;
+      --card-foreground: 0 0% 95%;
+      --popover: 0 0% 12%;
+      --popover-foreground: 0 0% 95%;
+      --primary: 147 78% 38%;
+      --primary-foreground: 0 0% 100%;
+      --secondary: 0 0% 20%;
+      --secondary-foreground: 0 0% 95%;
+      --muted: 0 0% 30%;
+      --muted-foreground: 0 0% 70%;
+      --accent: 147 78% 48%;
+      --accent-foreground: 0 0% 100%;
       --destructive: 0 62.8% 30.6%;
-      --destructive-foreground: 0 0% 98%;
-
-      --border: 0 0% 14.9%;
-      --input: 0 0% 14.9%;
-      --ring: 221 83% 53%;
+      --destructive-foreground: 0 0% 100%;
+      --border: 0 0% 20%;
+      --input: 0 0% 20%;
+      --ring: 147 78% 38%;
     }
   }
 
   .dark {
-    /* Optional dark mode - kept minimal */
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-
-    --primary: 221 83% 53%;
-    --primary-foreground: 0 0% 98%;
-
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-
+    /* Dark mode theme for EduHub */
+    --background: 0 0% 9%;
+    --foreground: 0 0% 95%;
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 147 78% 38%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 20%;
+    --secondary-foreground: 0 0% 95%;
+    --muted: 0 0% 30%;
+    --muted-foreground: 0 0% 70%;
+    --accent: 147 78% 48%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 221 83% 53%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 147 78% 38%;
   }
 }
 
@@ -145,7 +129,91 @@
   button, [role="button"], a {
     @apply transition-colors duration-150;
   }
+
+  /* Typography Scale for Educational Content */
+  h1 {
+    @apply text-4xl md:text-5xl font-bold text-white leading-tight;
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl font-bold text-white leading-snug mt-8 mb-4;
+  }
+
+  h3 {
+    @apply text-2xl md:text-3xl font-semibold text-white leading-snug mt-6 mb-3;
+  }
+
+  h4 {
+    @apply text-xl md:text-2xl font-semibold text-slate-100 leading-relaxed mt-5 mb-2;
+  }
+
+  h5, h6 {
+    @apply text-lg font-semibold text-slate-100 leading-relaxed mt-4 mb-2;
+  }
+
+  p {
+    @apply text-base leading-relaxed text-slate-300 mb-4;
+  }
+
+  /* Code block styling */
+  code {
+    @apply bg-slate-800 text-slate-100 px-2 py-1 rounded text-sm font-mono;
+  }
+
+  pre {
+    @apply bg-slate-900 border border-slate-700 rounded-lg p-4 overflow-x-auto my-6;
+  }
+
+  pre code {
+    @apply bg-transparent px-0 py-0;
+  }
+
+  /* List styling */
+  ul, ol {
+    @apply ml-6 mb-4 space-y-2;
+  }
+
+  li {
+    @apply text-base text-slate-300 leading-relaxed;
+  }
+
+  /* Blockquote styling */
+  blockquote {
+    @apply border-l-4 border-primary pl-4 italic text-slate-400 my-6;
+  }
+
+  /* Link styling */
+  a {
+    @apply text-primary hover:text-accent transition-colors;
+  }
+
+  /* Table styling */
+  table {
+    @apply w-full border-collapse my-6;
+  }
+
+  thead {
+    @apply bg-slate-800 border-b border-slate-700;
+  }
+
+  th, td {
+    @apply border border-slate-700 px-4 py-2 text-left text-slate-300;
+  }
+
+  th {
+    @apply font-semibold text-white;
+  }
+
+  tbody tr:hover {
+    @apply bg-slate-800/50;
+  }
+
+  /* Horizontal rule */
+  hr {
+    @apply border-slate-700 my-8;
+  }
 }
+
 
 /* Performance optimizations - GPU acceleration for smooth scrolling */
 @layer utilities {
@@ -168,5 +236,53 @@
   /* Lighthouse CLS optimization - reserve space for dynamic content */
   .content-placeholder {
     contain: layout style paint;
+  }
+
+  /* Reading experience utilities */
+  .prose-content {
+    @apply max-w-none space-y-4;
+  }
+
+  /* Centered reading column (65-75 characters wide) */
+  .reading-column {
+    @apply max-w-3xl mx-auto;
+  }
+
+  /* Responsive text sizes */
+  .text-display {
+    @apply text-3xl md:text-4xl lg:text-5xl font-bold;
+  }
+
+  .text-heading-1 {
+    @apply text-2xl md:text-3xl lg:text-4xl font-bold;
+  }
+
+  .text-heading-2 {
+    @apply text-xl md:text-2xl lg:text-3xl font-semibold;
+  }
+
+  .text-heading-3 {
+    @apply text-lg md:text-xl lg:text-2xl font-semibold;
+  }
+
+  .text-body {
+    @apply text-base md:text-lg leading-relaxed;
+  }
+
+  .text-small {
+    @apply text-sm md:text-base leading-relaxed;
+  }
+
+  /* Focus ring for accessibility */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-950;
+  }
+
+  /* Truncate and clamp utilities */
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 }

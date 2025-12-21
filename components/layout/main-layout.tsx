@@ -58,16 +58,28 @@ export function MainLayout({ children }: MainLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+      {/* Overlay for mobile */}
+      {mounted && isMobile && sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+          onClick={closeSidebar}
+          role="presentation"
+        />
+      )}
+
+      {/* Fixed Header */}
+      <Header onMenuClick={toggleSidebar} sidebarOpen={sidebarOpen} />
+
+      {/* Sidebar */}
       <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} isMobile={!isDesktop} />
 
-      <div className={cn('transition-all duration-200 ease-out', sidebarOpen ? 'lg:pl-72' : 'lg:pl-0')}>
-        <Header onMenuClick={toggleSidebar} sidebarOpen={sidebarOpen} />
-
-        <main className="min-h-[calc(100vh-3.5rem)] bg-white">
+      {/* Main Content */}
+      <main className="col-span-1 pt-16 bg-slate-950 min-h-screen">
+        <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
           {children}
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

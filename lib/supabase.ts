@@ -80,3 +80,42 @@ export type Upload = {
   subject?: Subject;
   uploader?: Profile;
 };
+
+export type Module = {
+  id: string;
+  subject_id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  order_index: number;
+  created_at: string;
+  updated_at: string;
+  subject?: Subject;
+  resources?: Resource[];
+};
+
+export type ResourceType = 'lesson' | 'pdf' | 'book' | 'link' | 'document';
+
+export type Resource = {
+  id: string;
+  module_id: string;
+  subject_id: string;
+  title: string;
+  slug: string;
+  description?: string;
+  resource_type: ResourceType;
+  content?: string;
+  pdf_url?: string;
+  external_link?: string;
+  author_id: string;
+  is_published: boolean;
+  is_premium: boolean;
+  order_index: number;
+  views: number;
+  created_at: string;
+  updated_at: string;
+  module?: Module;
+  subject?: Subject;
+  author?: Profile;
+  tags?: Tag[];
+};
