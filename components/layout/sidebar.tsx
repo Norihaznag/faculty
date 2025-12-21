@@ -106,7 +106,7 @@ export function Sidebar({ isOpen, onClose, isMobile = false }: SidebarProps) {
         <div className="flex items-center justify-between h-14 px-4 border-b border-border/40">
           <Link href="/" className="flex items-center space-x-2" onClick={isMobile ? onClose : undefined}>
             <BookOpen className="h-6 w-6" />
-            <span className="font-bold text-lg">EduHub</span>
+            <span className="font-bold text-lg">ScholarHub</span>
           </Link>
           <Button
             variant="ghost"
@@ -141,7 +141,7 @@ export function Sidebar({ isOpen, onClose, isMobile = false }: SidebarProps) {
 
             <div className="pt-3 pb-1.5">
               <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Subjects
+                Faculties
               </h3>
             </div>
 

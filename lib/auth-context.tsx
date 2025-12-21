@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          await fetchProfile(session.user.id);
+          await fetchProfile(session.user.id, isMounted);
         } else {
           if (isMounted) {
             setProfile(null);
@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        fetchProfile(session.user.id);
+        fetchProfile(session.user.id, isMounted);
       } else {
         setProfile(null);
         setLoading(false);
@@ -73,7 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (userId: string, isMountedRef: boolean) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -82,6 +82,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .maybeSingle();
 
       if (error) throw error;
+      
+      if (!isMountedRef) return;  // ← EXIT if unmounted
       
       if (data && data.is_active === false) {
         await supabase.auth.signOut();
@@ -94,9 +96,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setProfile(data || null);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching profile:', error);
-      setAuthError(error instanceof Error ? error.message : 'Failed to fetch profile');
-      setLoading(false);
+      if (isMountedRef) {  // ← Only set error state if still mounted
+        console.error('Error fetching profile:', error);
+        setAuthError(error instanceof Error ? error.message : 'Failed to fetch profile');
+        setLoading(false);
+      }
     }
   };
 

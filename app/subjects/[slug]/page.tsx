@@ -59,7 +59,7 @@ export default function SubjectPage() {
     return (
       <MainLayout>
         <div className="container mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold">Subject Not Found</h1>
+          <h1 className="text-3xl font-bold">Faculty Not Found</h1>
         </div>
       </MainLayout>
     );

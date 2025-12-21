@@ -1,7 +1,7 @@
 {
-  "name": "EduHub",
-  "short_name": "EduHub",
-  "description": "Your comprehensive university resource platform. Access tutorials, study materials, and educational content across all subjects.",
+  "name": "ScholarHub",
+  "short_name": "ScholarHub",
+  "description": "Open-source platform for PDFs, books, lessons, modules, and educational materials from faculties and schools worldwide.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -67,25 +67,25 @@
   ],
   "shortcuts": [
     {
-      "name": "Upload Content",
-      "short_name": "Upload",
-      "description": "Upload educational content to EduHub",
-      "url": "/upload?source=pwa",
+      "name": "Browse Faculties",
+      "short_name": "Faculties",
+      "description": "Browse educational resources by faculty",
+      "url": "/faculties?source=pwa",
       "icons": [
         {
-          "src": "/icon-upload-96.png",
+          "src": "/icon-browse-96.png",
           "sizes": "96x96"
         }
       ]
     },
     {
-      "name": "Browse Subjects",
-      "short_name": "Browse",
-      "description": "Browse subjects on EduHub",
-      "url": "/subjects?source=pwa",
+      "name": "Upload Content",
+      "short_name": "Upload",
+      "description": "Share educational content on ScholarHub",
+      "url": "/upload?source=pwa",
       "icons": [
         {
-          "src": "/icon-browse-96.png",
+          "src": "/icon-upload-96.png",
           "sizes": "96x96"
         }
       ]

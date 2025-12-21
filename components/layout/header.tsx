@@ -170,7 +170,7 @@ export function Header({ onMenuClick, sidebarOpen = false }: HeaderProps) {
                       >
                         <div className="text-sm font-medium">{lesson.title}</div>
                         <div className="text-xs text-muted-foreground">
-                          {lesson.subject?.name ? `Subject: ${lesson.subject.name}` : 'Lesson'}
+                          {lesson.subject?.name ? `Faculty: ${lesson.subject.name}` : 'Lesson'}
                         </div>
                       </button>
                     ))}
@@ -180,7 +180,7 @@ export function Header({ onMenuClick, sidebarOpen = false }: HeaderProps) {
                 {suggestions.subjects.length > 0 && (
                   <div>
                     <p className="px-2 py-1 text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                      <Tags className="h-3 w-3" /> Subjects
+                      <Tags className="h-3 w-3" /> Faculties
                     </p>
                     {suggestions.subjects.map((subject) => (
                       <button
@@ -190,7 +190,7 @@ export function Header({ onMenuClick, sidebarOpen = false }: HeaderProps) {
                         className="w-full text-left px-3 py-2 rounded-md hover:bg-muted/50 transition-colors active:bg-muted"
                       >
                         <div className="text-sm font-medium">{subject.name}</div>
-                        <div className="text-xs text-muted-foreground">Subject</div>
+                        <div className="text-xs text-muted-foreground">Faculty</div>
                       </button>
                     ))}
                   </div>

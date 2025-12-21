@@ -18,7 +18,7 @@ import { slugify } from '@/lib/utils/slug';
 import { Upload, CheckCircle, ChevronDown, Zap, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type ContentType = 'text' | 'pdf' | 'link';
+type ContentType = 'lesson' | 'pdf' | 'book' | 'module' | 'link';
 
 export default function UploadPage() {
   const router = useRouter();
@@ -29,7 +29,7 @@ export default function UploadPage() {
   const [subjectId, setSubjectId] = useState('');
   const [suggestedSubjectName, setSuggestedSubjectName] = useState('');
   const [subjectSearchOpen, setSubjectSearchOpen] = useState(false);
-  const [contentType, setContentType] = useState<ContentType>('text');
+  const [contentType, setContentType] = useState<ContentType>('lesson');
   const [semester, setSemester] = useState('');
   const [tags, setTags] = useState('');
   const [error, setError] = useState('');
@@ -74,7 +74,7 @@ export default function UploadPage() {
     }
 
     if (!subjectId && !suggestedSubjectName.trim()) {
-      setError('Please select or enter a subject');
+      setError('Please select or enter a faculty');
       setLoading(false);
       return;
     }
@@ -84,9 +84,9 @@ export default function UploadPage() {
     let pdfUrl: string | null = null;
     let externalLink: string | null = null;
 
-    if (contentType === 'text') {
+    if (contentType === 'lesson' || contentType === 'module') {
       finalContent = content.trim() || null;
-    } else if (contentType === 'pdf') {
+    } else if (contentType === 'pdf' || contentType === 'book') {
       pdfUrl = content.trim() || null;
     } else if (contentType === 'link') {
       externalLink = content.trim() || null;
@@ -332,7 +332,7 @@ export default function UploadPage() {
                         Your submission has been received and is pending admin approval!
                         {suggestedSubjectName && !subjectId && (
                           <span className="block mt-1 text-xs">
-                            Note: You suggested a new subject "{suggestedSubjectName}". Admin will review and create it if approved.
+                            Note: You suggested a new faculty "{suggestedSubjectName}". Admin will review and create it if approved.
                           </span>
                         )}
                       </>
@@ -383,7 +383,7 @@ export default function UploadPage() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="subject">Subject *</Label>
+                <Label htmlFor="subject">Faculty *</Label>
                 <Popover open={subjectSearchOpen} onOpenChange={setSubjectSearchOpen}>
                   <PopoverTrigger asChild>
                     <Button
@@ -393,14 +393,14 @@ export default function UploadPage() {
                       className="w-full justify-between"
                       disabled={loading}
                     >
-                      {subjectDisplayValue || 'Select or type a subject...'}
+                      {subjectDisplayValue || 'Select or type a faculty...'}
                       <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
                     <Command>
                       <CommandInput
-                        placeholder="Search or type new subject..."
+                        placeholder="Search or type new faculty..."
                         value={suggestedSubjectName}
                         onValueChange={(value) => {
                           setSuggestedSubjectName(value);
@@ -419,11 +419,11 @@ export default function UploadPage() {
                       <CommandList>
                         <CommandEmpty>
                           <p className="py-2 text-center text-sm text-muted-foreground">
-                            No subject found
+                            No faculty found
                           </p>
                         </CommandEmpty>
 
-                        {/* Suggest creating a new subject based on what the user is typing */}
+                        {/* Suggest creating a new faculty based on what the user is typing */}
                         {suggestedSubjectName.trim() &&
                           !subjects.some(
                             (s) =>
@@ -433,13 +433,13 @@ export default function UploadPage() {
                               <CommandItem
                                 value={suggestedSubjectName}
                                 onSelect={() => {
-                                  // Clear any selected subject id so we treat this as a new subject
+                                  // Clear any selected subject id so we treat this as a new faculty
                                   setSubjectId('');
                                   setSubjectSearchOpen(false);
                                 }}
                               >
                                 <span className="mr-2 text-primary font-medium">+</span>
-                                Use "{suggestedSubjectName}" as a new subject
+                                Use "{suggestedSubjectName}" as a new faculty
                               </CommandItem>
                             </CommandGroup>
                           )}
@@ -471,7 +471,7 @@ export default function UploadPage() {
                 </Popover>
                 {suggestedSubjectName && !subjectId && (
                   <p className="text-xs text-muted-foreground">
-                    ✓ New subject "{suggestedSubjectName}" will be suggested to admin
+                    ✓ New faculty "{suggestedSubjectName}" will be suggested to admin
                   </p>
                 )}
               </div>
@@ -493,31 +493,35 @@ export default function UploadPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="content">
-                    {contentType === 'text' && 'Content'}
+                    {contentType === 'lesson' && 'Lesson Content'}
+                    {contentType === 'module' && 'Module Content'}
                     {contentType === 'pdf' && 'PDF URL'}
+                    {contentType === 'book' && 'Book/Reference URL'}
                     {contentType === 'link' && 'External Link'}
                     {advancedMode && ' (Optional)'}
                   </Label>
                   {!advancedMode && (
                     <Select value={contentType} onValueChange={(v) => setContentType(v as ContentType)}>
-                      <SelectTrigger className="w-32">
+                      <SelectTrigger className="w-40">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="text">Text</SelectItem>
+                        <SelectItem value="lesson">Lesson</SelectItem>
+                        <SelectItem value="module">Module</SelectItem>
                         <SelectItem value="pdf">PDF</SelectItem>
+                        <SelectItem value="book">Book</SelectItem>
                         <SelectItem value="link">Link</SelectItem>
                       </SelectContent>
                     </Select>
                   )}
                 </div>
-                {contentType === 'text' ? (
+                {contentType === 'lesson' || contentType === 'module' ? (
                   <>
                     <Textarea
                       id="content"
                       placeholder={
                         advancedMode
-                          ? 'Write or paste the lesson content here. You can use HTML for formatting.'
+                          ? 'Write or paste the content here. You can use HTML for formatting.'
                           : 'Paste your content here...'
                       }
                       value={content}
@@ -567,7 +571,7 @@ export default function UploadPage() {
                     className="text-base"
                   />
                 )}
-                {contentType === 'text' && advancedMode && (
+                {contentType === 'lesson' && advancedMode && (
                   <p className="text-xs text-muted-foreground">Supports HTML formatting</p>
                 )}
               </div>
@@ -581,8 +585,10 @@ export default function UploadPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="text">Text Content</SelectItem>
-                        <SelectItem value="pdf">PDF URL</SelectItem>
+                        <SelectItem value="lesson">Lesson</SelectItem>
+                        <SelectItem value="module">Module</SelectItem>
+                        <SelectItem value="pdf">PDF</SelectItem>
+                        <SelectItem value="book">Book</SelectItem>
                         <SelectItem value="link">External Link</SelectItem>
                       </SelectContent>
                     </Select>

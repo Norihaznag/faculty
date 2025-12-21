@@ -10,15 +10,15 @@ const inter = Inter({
   preload: true,
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://eduhub.com';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://scholarhub.com';
 
 export const metadata: Metadata = {
-  title: 'EduHub | University Resource Platform',
-  description: 'Your comprehensive university resource platform. Access tutorials, study materials, and educational content across all subjects.',
+  title: 'ScholarHub | Free Educational Resources for Faculties & Schools',
+  description: 'Open-source platform for PDFs, books, lessons, modules, and educational materials. Access quality content from faculties and schools worldwide.',
   metadataBase: new URL(siteUrl),
-  authors: [{ name: 'EduHub' }],
-  creator: 'EduHub',
-  publisher: 'EduHub',
+  authors: [{ name: 'ScholarHub' }],
+  creator: 'ScholarHub',
+  publisher: 'ScholarHub',
   formatDetection: {
     telephone: false,
     email: false,
@@ -42,29 +42,29 @@ export const metadata: Metadata = {
     },
   ],
   manifest: '/manifest.json',
-  keywords: ['education', 'university', 'resources', 'learning', 'tutorials', 'study materials'],
+  keywords: ['education', 'university', 'faculties', 'schools', 'resources', 'learning', 'tutorials', 'study materials', 'modules', 'books', 'pdfs'],
   openGraph: {
     type: 'website',
     locale: 'en_US',
     url: siteUrl,
-    siteName: 'EduHub',
-    title: 'EduHub | University Resource Platform',
-    description: 'Your comprehensive university resource platform. Access tutorials, study materials, and educational content across all subjects.',
+    siteName: 'ScholarHub',
+    title: 'ScholarHub | Free Educational Resources',
+    description: 'Open-source platform for educational content from faculties and schools worldwide.',
     images: [
       {
         url: `${siteUrl}/og-image.png`,
         width: 1200,
         height: 630,
-        alt: 'EduHub',
+        alt: 'ScholarHub',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'EduHub | University Resource Platform',
-    description: 'Your comprehensive university resource platform. Access tutorials, study materials, and educational content across all subjects.',
+    title: 'ScholarHub | Free Educational Resources',
+    description: 'Open-source platform for educational content from faculties and schools worldwide.',
     images: [`${siteUrl}/og-image.png`],
-    creator: '@eduhub',
+    creator: '@scholarhub',
   },
   robots: {
     index: true,
@@ -108,11 +108,11 @@ export default function RootLayout({
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'EducationalOrganization',
-              name: 'EduHub',
-              description: 'University resource platform',
+              name: 'ScholarHub',
+              description: 'Open-source platform for educational content from faculties and schools',
               url: siteUrl,
               sameAs: [
-                'https://twitter.com/eduhub',
+                'https://twitter.com/scholarhub',
               ],
             }),
           }}

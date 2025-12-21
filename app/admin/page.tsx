@@ -27,6 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/lib/auth-context';
 import { supabase, Upload, Profile } from '@/lib/supabase';
 import { slugify } from '@/lib/utils/slug';
@@ -183,63 +184,95 @@ export default function AdminPage() {
     setActionLoading(true);
 
     let finalSubjectId = upload.subject_id;
+    let newSubjectId: string | null = null;
 
-    // If there's a suggested subject name but no subject_id, create the subject
-    if (upload.suggested_subject_name && !upload.subject_id) {
-      const subjectSlug = slugify(upload.suggested_subject_name);
-      const { data: newSubject, error: subjectError } = await supabase
-        .from('subjects')
-        .insert({
-          name: upload.suggested_subject_name,
-          slug: subjectSlug,
-          order_index: 0,
-        })
-        .select()
-        .single();
+    try {
+      // Step 1: Create subject if needed
+      if (upload.suggested_subject_name && !upload.subject_id) {
+        const subjectSlug = slugify(upload.suggested_subject_name);
+        const { data: newSubject, error: subjectError } = await supabase
+          .from('subjects')
+          .insert({
+            name: upload.suggested_subject_name,
+            slug: subjectSlug,
+            order_index: 0,
+          })
+          .select()
+          .single();
 
-      if (!subjectError && newSubject) {
+        if (subjectError) {
+          throw new Error(`Failed to create faculty: ${subjectError.message}`);
+        }
+
+        if (!newSubject) {
+          throw new Error('Faculty creation returned empty result');
+        }
+
         finalSubjectId = newSubject.id;
+        newSubjectId = newSubject.id;
       }
-    }
 
-    if (!finalSubjectId) {
-      setActionLoading(false);
-      return;
-    }
+      if (!finalSubjectId) {
+        throw new Error('No faculty ID available for lesson');
+      }
 
-    const slug = slugify(upload.title);
+      // Step 2: Create lesson
+      const slug = slugify(upload.title);
+      const { error: lessonError } = await supabase.from('lessons').insert({
+        title: upload.title,
+        slug: slug,
+        content: upload.content,
+        subject_id: finalSubjectId,
+        semester: upload.semester,
+        pdf_url: upload.pdf_url,
+        external_link: upload.external_link,
+        author_id: upload.uploader_id,
+        is_published: true,
+        is_premium: false,
+      });
 
-    const { error: lessonError } = await supabase.from('lessons').insert({
-      title: upload.title,
-      slug: slug,
-      content: upload.content,
-      subject_id: finalSubjectId,
-      semester: upload.semester,
-      pdf_url: upload.pdf_url,
-      external_link: upload.external_link,
-      author_id: upload.uploader_id,
-      is_published: true,
-      is_premium: false,
-    });
+      if (lessonError) {
+        throw new Error(`Failed to create lesson: ${lessonError.message}`);
+      }
 
-    if (!lessonError) {
-      await supabase
+      // Step 3: Mark upload as approved (only after both succeed)
+      const { error: updateError } = await supabase
         .from('uploads')
         .update({
           status: 'approved',
           reviewed_by: user?.id,
           reviewed_at: new Date().toISOString(),
           admin_notes: adminNotes,
-          subject_id: finalSubjectId, // Update with created subject if needed
+          subject_id: finalSubjectId,
         })
         .eq('id', upload.id);
 
+      if (updateError) {
+        throw new Error(`Failed to update upload: ${updateError.message}`);
+      }
+
+      // All succeeded - refresh data
       await fetchData();
       setSelectedUpload(null);
       setAdminNotes('');
-    }
 
-    setActionLoading(false);
+    } catch (error) {
+      console.error('Error approving upload:', error);
+
+      // ROLLBACK: Delete orphaned subject if created
+      if (newSubjectId) {
+        await supabase
+          .from('subjects')
+          .delete()
+          .eq('id', newSubjectId)
+          .catch(err => console.error('Rollback failed:', err));
+      }
+
+      // Show error to user
+      alert(`Failed to approve: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const handleReject = async (upload: Upload) => {
@@ -361,9 +394,14 @@ export default function AdminPage() {
               Rejected ({rejectedUploads.length})
             </TabsTrigger>
             {isAdmin && (
-              <TabsTrigger value="users">
-                Users ({allUsers.length})
-              </TabsTrigger>
+              <>
+                <TabsTrigger value="faculties">
+                  Faculties
+                </TabsTrigger>
+                <TabsTrigger value="users">
+                  Users ({allUsers.length})
+                </TabsTrigger>
+              </>
             )}
           </TabsList>
 
@@ -693,6 +731,32 @@ export default function AdminPage() {
                   ))}
                 </div>
               </div>
+            )}
+
+            {isAdmin && (
+              <TabsContent value="faculties" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Manage Faculties</CardTitle>
+                    <CardDescription>
+                      View and manage all educational faculties. Faculties are created by users when uploading content with new faculty names. You can manage them here to ensure quality and organization.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        Faculties are automatically generated from lesson content uploads. Use the upload form to create new faculties by entering a faculty name.
+                      </p>
+                      <Alert>
+                        <BookOpen className="h-4 w-4" />
+                        <AlertDescription>
+                          To manage faculties, go to the Subjects management in your Supabase dashboard or create new faculties through the content upload system.
+                        </AlertDescription>
+                      </Alert>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
             )}
           </TabsContent>
         </Tabs>

@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase, Subject, Lesson } from '@/lib/supabase';
-import { BookOpen, TrendingUp, Clock, ArrowRight } from 'lucide-react';
+import { BookOpen, TrendingUp, Clock, ArrowRight, FileText, Users, Globe } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // Lazy load less critical sections
@@ -41,8 +41,8 @@ export default function Home() {
   const [popularLessons, setPopularLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Clean, minimalist subject tile styles - subtle colors on white
-  const subjectTileColors = [
+  // Faculty/school colored tiles
+  const facultyColors = [
     'bg-blue-50 border-blue-200/50 hover:bg-blue-100',
     'bg-emerald-50 border-emerald-200/50 hover:bg-emerald-100',
     'bg-purple-50 border-purple-200/50 hover:bg-purple-100',
@@ -83,29 +83,79 @@ export default function Home() {
   return (
     <MainLayout>
       <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-10 sm:space-y-12">
+        {/* Hero Section */}
         <section className="text-center space-y-3 sm:space-y-4 py-6 sm:py-10">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-foreground">
-            Welcome to EduHub
+          <div className="inline-block px-4 py-2 bg-blue-100 rounded-full mb-4">
+            <span className="text-blue-700 font-semibold text-sm">Open Educational Resource Platform</span>
+          </div>
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-foreground">
+            Free Learning for Everyone
           </h1>
-          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
-            Your comprehensive university resource platform. Access tutorials, study materials, and educational content across all subjects.
+          <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto px-4 leading-relaxed">
+            Access thousands of lessons, modules, PDFs, and educational materials from faculties and schools worldwide. A community-driven platform for open education.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center pt-4 px-4">
-            <Button size="lg" className="w-full sm:w-auto" asChild>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center pt-6 px-4">
+            <Button size="lg" className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700" asChild>
               <Link href="/subjects/computer-science">
-                Explore Subjects <ArrowRight className="ml-2 h-4 w-4" />
+                Browse Resources <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
             <Button size="lg" variant="outline" className="w-full sm:w-auto" asChild>
-              <Link href="/upload">Upload Content</Link>
+              <Link href="/upload">Contribute Content</Link>
             </Button>
           </div>
         </section>
 
+        {/* Stats Section */}
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+          <Card className="border border-border/60">
+            <CardContent className="pt-6">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-blue-100 rounded-lg">
+                  <FileText className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Resources</p>
+                  <p className="text-2xl font-bold">{recentLessons.length + popularLessons.length}+</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-border/60">
+            <CardContent className="pt-6">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-emerald-100 rounded-lg">
+                  <Users className="h-6 w-6 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Faculties</p>
+                  <p className="text-2xl font-bold">{subjects.length}+</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-border/60">
+            <CardContent className="pt-6">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-purple-100 rounded-lg">
+                  <Globe className="h-6 w-6 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Global Community</p>
+                  <p className="text-2xl font-bold">Open Source</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Faculties/Subjects Section */}
         <section className="space-y-4">
           <div className="flex items-center gap-2 mb-4 sm:mb-6 px-4 sm:px-0">
-            <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-            <h2 className="text-2xl sm:text-3xl font-bold">Browse by Subject</h2>
+            <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
+            <h2 className="text-2xl sm:text-3xl font-bold">Browse by Faculty</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 px-4 sm:px-0">
             {subjects.map((subject, index) => (
@@ -115,10 +165,10 @@ export default function Home() {
                 className="group gpu-accelerated"
               >
                 <Card
-                  className={`h-full border rounded-xl transition-all active:scale-[0.98] ${subjectTileColors[index % subjectTileColors.length]}`}
+                  className={`h-full border rounded-xl transition-all active:scale-[0.98] cursor-pointer ${facultyColors[index % facultyColors.length]}`}
                 >
                   <CardHeader className="space-y-1.5 p-4 sm:p-6">
-                    <CardTitle className="text-lg sm:text-xl font-semibold text-foreground group-hover:text-primary transition-colors">
+                    <CardTitle className="text-lg sm:text-xl font-semibold text-foreground group-hover:text-blue-600 transition-colors">
                       {subject.name}
                     </CardTitle>
                     <CardDescription className="line-clamp-2 text-sm text-muted-foreground">
@@ -131,10 +181,12 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Recent Lessons */}
         <Suspense fallback={<LessonsLoadingSkeleton />}>
           <RecentLessonsSection lessons={recentLessons} />
         </Suspense>
 
+        {/* Popular Lessons */}
         <Suspense fallback={<LessonsLoadingSkeleton />}>
           <PopularLessonsSection lessons={popularLessons} />
         </Suspense>
