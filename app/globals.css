@@ -111,6 +111,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    color: #212121; /* Force dark text on light background */
   }
 
   /* Reduce motion for accessibility */
