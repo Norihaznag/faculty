@@ -1,20 +1,21 @@
 /*
 ================================================================================
-COMPLETE DATABASE SCHEMA FOR FACULTY EDUCATION PLATFORM
+FACULTY EDUCATION PLATFORM - COMPLETE DATABASE SCHEMA
 ================================================================================
 
-This is a comprehensive SQL schema for setting up a complete educational 
-resource platform with:
-- User profiles and role-based access control
-- Subjects and lessons/tutorials
-- Modules and hierarchical content organization
+Comprehensive SQL schema for a complete educational resource platform with:
+- User profiles and role-based access control (RBAC)
+- Subjects and lessons/tutorials with ordering
+- Modules and resources for hierarchical content organization
 - Tagging system for content categorization
 - Bookmarks for user favorites
 - Upload queue for content moderation
 - Row-Level Security (RLS) policies for data protection
+- Automatic profile creation on signup
+- Updated timestamps for all content tables
 
-Created: December 21, 2025
-Last Updated: Complete schema with all migrations
+Created: December 2025
+Database: Supabase (PostgreSQL)
 ================================================================================
 */
 
@@ -177,6 +178,9 @@ CREATE TABLE IF NOT EXISTS resource_tags (
 -- ============================================================================
 -- 3. CREATE INDEXES FOR PERFORMANCE
 -- ============================================================================
+
+CREATE INDEX IF NOT EXISTS idx_profiles_email ON profiles(email);
+CREATE INDEX IF NOT EXISTS idx_profiles_role ON profiles(role);
 
 CREATE INDEX IF NOT EXISTS idx_lessons_subject ON lessons(subject_id);
 CREATE INDEX IF NOT EXISTS idx_lessons_author ON lessons(author_id);
@@ -499,18 +503,28 @@ CREATE POLICY "Moderators and admins can delete any upload"
 -- 12. RLS POLICIES FOR MODULES
 -- ============================================================================
 
-CREATE POLICY "Modules are publicly readable" ON modules
-  FOR SELECT USING (true);
+CREATE POLICY "Modules are publicly readable"
+  ON modules FOR SELECT
+  USING (true);
 
-CREATE POLICY "Teachers and admins can create modules" ON modules
-  FOR INSERT WITH CHECK (
+CREATE POLICY "Teachers and admins can create modules"
+  ON modules FOR INSERT
+  TO authenticated
+  WITH CHECK (
     auth.uid() IN (
       SELECT id FROM profiles WHERE role IN ('teacher', 'admin')
     )
   );
 
-CREATE POLICY "Teachers and admins can update modules" ON modules
-  FOR UPDATE USING (
+CREATE POLICY "Teachers and admins can update modules"
+  ON modules FOR UPDATE
+  TO authenticated
+  USING (
+    auth.uid() IN (
+      SELECT id FROM profiles WHERE role IN ('teacher', 'admin')
+    )
+  )
+  WITH CHECK (
     auth.uid() IN (
       SELECT id FROM profiles WHERE role IN ('teacher', 'admin')
     )
@@ -520,19 +534,40 @@ CREATE POLICY "Teachers and admins can update modules" ON modules
 -- 13. RLS POLICIES FOR RESOURCES
 -- ============================================================================
 
-CREATE POLICY "Resources are publicly readable if published" ON resources
-  FOR SELECT USING (is_published OR auth.uid() = author_id);
+CREATE POLICY "Resources are publicly readable if published"
+  ON resources FOR SELECT
+  USING (is_published OR auth.uid() = author_id);
 
-CREATE POLICY "Teachers and admins can create resources" ON resources
-  FOR INSERT WITH CHECK (
+CREATE POLICY "Teachers and admins can create resources"
+  ON resources FOR INSERT
+  TO authenticated
+  WITH CHECK (
     auth.uid() IN (
       SELECT id FROM profiles WHERE role IN ('teacher', 'admin')
     ) AND
     auth.uid() = author_id
   );
 
-CREATE POLICY "Authors and admins can update resources" ON resources
-  FOR UPDATE USING (
+CREATE POLICY "Authors and admins can update resources"
+  ON resources FOR UPDATE
+  TO authenticated
+  USING (
+    auth.uid() = author_id OR
+    auth.uid() IN (
+      SELECT id FROM profiles WHERE role = 'admin'
+    )
+  )
+  WITH CHECK (
+    auth.uid() = author_id OR
+    auth.uid() IN (
+      SELECT id FROM profiles WHERE role = 'admin'
+    )
+  );
+
+CREATE POLICY "Authors and admins can delete resources"
+  ON resources FOR DELETE
+  TO authenticated
+  USING (
     auth.uid() = author_id OR
     auth.uid() IN (
       SELECT id FROM profiles WHERE role = 'admin'
@@ -543,11 +578,26 @@ CREATE POLICY "Authors and admins can update resources" ON resources
 -- 14. RLS POLICIES FOR RESOURCE TAGS
 -- ============================================================================
 
-CREATE POLICY "Resource tags are publicly readable" ON resource_tags
-  FOR SELECT USING (true);
+CREATE POLICY "Resource tags are publicly readable"
+  ON resource_tags FOR SELECT
+  USING (true);
 
-CREATE POLICY "Authors can manage resource tags" ON resource_tags
-  FOR INSERT WITH CHECK (
+CREATE POLICY "Authors can manage resource tags"
+  ON resource_tags FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    auth.uid() IN (
+      SELECT author_id FROM resources WHERE id = resource_id
+    ) OR
+    auth.uid() IN (
+      SELECT id FROM profiles WHERE role = 'admin'
+    )
+  );
+
+CREATE POLICY "Authors can delete resource tags"
+  ON resource_tags FOR DELETE
+  TO authenticated
+  USING (
     auth.uid() IN (
       SELECT author_id FROM resources WHERE id = resource_id
     ) OR
@@ -630,17 +680,19 @@ CREATE TRIGGER update_resources_updated_at
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================================================
--- 17. SAMPLE DATA (Optional - Comment out if not needed)
+-- 17. SAMPLE DATA (Optional - Uncomment as needed)
 -- ============================================================================
 
+/*
 -- Insert sample subjects
--- INSERT INTO subjects (name, slug, description, order_index) VALUES
---   ('Mathematics', 'mathematics', 'Mathematics tutorials and lessons', 1),
---   ('Science', 'science', 'Science education resources', 2),
---   ('English', 'english', 'English language and literature', 3),
---   ('History', 'history', 'History and social studies', 4),
---   ('Technology', 'technology', 'Technology and computer science', 5);
+INSERT INTO subjects (name, slug, description, order_index) VALUES
+  ('Mathematics', 'mathematics', 'Mathematics tutorials and lessons', 1),
+  ('Science', 'science', 'Science education resources', 2),
+  ('English', 'english', 'English language and literature', 3),
+  ('History', 'history', 'History and social studies', 4),
+  ('Technology', 'technology', 'Technology and computer science', 5);
+*/
 
 -- ============================================================================
--- END OF SCHEMA
+-- END OF DATABASE SCHEMA
 -- ============================================================================

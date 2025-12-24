@@ -9,12 +9,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { useAuth } from '@/lib/auth-context';
 import { BookOpen } from 'lucide-react';
 
 export default function SignUpPage() {
   const router = useRouter();
-  const { signUp } = useAuth();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -47,21 +45,33 @@ export default function SignUpPage() {
       return;
     }
 
-    const { error: signUpError } = await signUp(email, password, fullName, role);
+    try {
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fullName,
+          email,
+          password,
+          role,
+        }),
+      });
 
-    if (signUpError) {
-      // Handle specific Supabase errors
-      const errorMessage = signUpError.message || 'Signup failed. Please try again.';
-      if (errorMessage.includes('already registered')) {
+      if (response.status === 201) {
+        setSuccess(true);
+      } else if (response.status === 409) {
         setError('This email is already registered. Please sign in instead.');
-      } else if (errorMessage.includes('weak password')) {
-        setError('Password is too weak. Please use a stronger password.');
+      } else if (response.status === 400) {
+        const data = await response.json();
+        setError(data.error || 'Signup failed. Please try again.');
       } else {
-        setError(errorMessage);
+        setError('Signup failed. Please try again.');
       }
-      setLoading(false);
-    } else {
-      setSuccess(true);
+    } catch (err) {
+      setError('An error occurred during signup. Please try again.');
+    } finally {
       setLoading(false);
     }
   };
@@ -71,17 +81,12 @@ export default function SignUpPage() {
       <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle>Check your email</CardTitle>
+            <CardTitle>Account created successfully!</CardTitle>
             <CardDescription>
-              We&apos;ve sent a confirmation link to{' '}
-              <span className="font-medium">{email}</span>. Please click the link in that email to
-              activate your account before signing in.
+              Your account has been created. You can now sign in with your email and password.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              If you don&apos;t see the email, please check your spam or junk folder.
-            </p>
             <Button asChild className="w-full">
               <Link href="/auth/login">Go to Sign In</Link>
             </Button>
@@ -105,8 +110,7 @@ export default function SignUpPage() {
           <CardHeader>
             <CardTitle>Create Account</CardTitle>
             <CardDescription>
-              Sign up to start accessing and sharing educational content. After registering, we&apos;ll
-              send you a link to confirm your email and activate your account.
+              Sign up to start accessing and sharing educational content.
             </CardDescription>
           </CardHeader>
           <CardContent>

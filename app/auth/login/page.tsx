@@ -3,17 +3,16 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@supabase/supabase-js';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useAuth } from '@/lib/auth-context';
 import { BookOpen } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -24,13 +23,25 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
-    const { error: signInError } = await signIn(email, password);
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-    if (signInError) {
-      setError(signInError.message);
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) {
+        setError(signInError.message);
+      } else {
+        router.push('/');
+      }
+    } catch (err) {
+      setError('An error occurred during sign in');
+    } finally {
       setLoading(false);
-    } else {
-      router.push('/');
     }
   };
 
@@ -91,8 +102,7 @@ export default function LoginPage() {
             </form>
 
             <p className="mt-4 text-xs text-muted-foreground">
-              If you just registered, please confirm your email using the link we sent before
-              trying to sign in.
+              Sign in with your email and password to access your account.
             </p>
 
             <div className="mt-4 text-center text-sm">
