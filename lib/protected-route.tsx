@@ -1,30 +1,30 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import { ReactNode, useEffect } from 'react';
 
 export function ProtectedRoute({ children, requiredRole }: { children: ReactNode; requiredRole?: string }) {
-  const { data: session, status } = useSession();
+  const { user, profile, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
+    if (!loading && !user) {
       router.push('/auth/login');
-    } else if (requiredRole && session?.user?.role !== requiredRole && session?.user?.role !== 'admin') {
+    } else if (!loading && requiredRole && profile?.role !== requiredRole && profile?.role !== 'admin') {
       router.push('/');
     }
-  }, [status, session, requiredRole, router]);
+  }, [loading, user, profile, requiredRole, router]);
 
-  if (status === 'loading') {
+  if (loading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
-  if (status === 'unauthenticated') {
+  if (!user) {
     return null;
   }
 
-  if (requiredRole && session?.user?.role !== requiredRole && session?.user?.role !== 'admin') {
+  if (requiredRole && profile?.role !== requiredRole && profile?.role !== 'admin') {
     return <div className="flex items-center justify-center min-h-screen">Access Denied</div>;
   }
 
