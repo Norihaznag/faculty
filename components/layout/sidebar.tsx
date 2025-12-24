@@ -18,7 +18,7 @@ type SidebarProps = {
 
 export function Sidebar({ isOpen, onClose, isMobile = false }: SidebarProps) {
   const pathname = usePathname();
-  const { isAdmin, isModerator } = useAuth();
+  const { user, isAdmin, isModerator } = useAuth();
   type SidebarLesson = { id: string; title: string; slug: string };
 
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -80,9 +80,11 @@ export function Sidebar({ isOpen, onClose, isMobile = false }: SidebarProps) {
 
   const navItems = [
     { href: '/', label: 'Home', icon: Home },
-    { href: '/bookmarks', label: 'Bookmarks', icon: Bookmark },
-    { href: '/upload', label: 'Upload', icon: Upload },
-    { href: '/my-uploads', label: 'My Uploads', icon: Upload },
+    ...(user ? [
+      { href: '/bookmarks', label: 'Bookmarks', icon: Bookmark },
+      { href: '/upload', label: 'Upload', icon: Upload },
+      { href: '/my-uploads', label: 'My Uploads', icon: Upload },
+    ] : []),
     { href: '/admin', label: 'Admin', icon: Settings, adminOnly: true },
   ];
 
