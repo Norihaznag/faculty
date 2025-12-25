@@ -75,7 +75,6 @@ export async function POST(req: NextRequest) {
         name: fullName,
         password: hashedPassword,
         role: role || "student",
-        isActive: true,
       },
     });
 
