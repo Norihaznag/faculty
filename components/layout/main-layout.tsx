@@ -58,27 +58,18 @@ export function MainLayout({ children }: MainLayoutProps) {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-slate-950">
       {/* Fixed Header - Full Width */}
       <Header onMenuClick={toggleSidebar} sidebarOpen={sidebarOpen} />
 
-      {/* Overlay for mobile */}
-      {mounted && !isDesktop && sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/60 z-30 lg:hidden"
-          onClick={closeSidebar}
-          role="presentation"
-        />
-      )}
-
       {/* Sidebar + Main Content */}
-      <div className="flex flex-1">
-        {/* Sidebar - shows in layout flow on desktop */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar - W3Schools style */}
         <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} isMobile={!isDesktop} />
 
         {/* Main Content */}
-        <main className="flex-1 pt-0 bg-background overflow-x-hidden">
-          <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+        <main className="flex-1 overflow-auto bg-white dark:bg-slate-950">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
             {children}
           </div>
         </main>

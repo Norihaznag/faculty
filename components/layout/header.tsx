@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search, Menu, User, LogOut, LogIn, Upload, Bookmark } from 'lucide-react';
+import { Search, Menu, User, LogOut, LogIn, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -34,78 +34,73 @@ export function Header({ onMenuClick, sidebarOpen = false }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white dark:bg-slate-950 border-b border-gray-200 dark:border-slate-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 gap-4">
-          {/* Left: Logo & Menu */}
-          <div className="flex items-center gap-4">
+    <header className="sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 shadow-sm">
+      <div className="px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14 gap-4">
+          {/* Left: Menu & Logo */}
+          <div className="flex items-center gap-3 min-w-0">
             <Button
               variant="ghost"
-              size="icon"
+              size="sm"
               onClick={onMenuClick}
-              className="lg:hidden"
+              className="lg:hidden h-8 w-8 p-0"
             >
-              <Menu className="h-5 w-5" />
+              {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
-            <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white text-sm font-bold">
+            <Link href="/" className="flex items-center gap-2 font-bold text-lg flex-shrink-0 hover:opacity-80 transition-opacity">
+              <div className="w-7 h-7 bg-gradient-to-br from-blue-600 to-indigo-700 rounded flex items-center justify-center text-white text-xs font-bold">
                 F
               </div>
-              <span className="hidden sm:inline">Faculty</span>
+              <span className="hidden sm:inline text-gray-900 dark:text-white">Faculty</span>
             </Link>
           </div>
 
           {/* Center: Search */}
-          <form onSubmit={handleSearch} className="flex-1 max-w-md">
+          <form onSubmit={handleSearch} className="flex-1 max-w-sm">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 type="search"
-                placeholder="Search lessons..."
+                placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-10 bg-gray-100 dark:bg-slate-800 border-0 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500"
+                className="pl-10 h-9 bg-gray-50 dark:bg-slate-800 border-gray-300 dark:border-slate-700 rounded-md text-sm focus-visible:ring-2 focus-visible:ring-blue-500"
               />
             </div>
           </form>
 
-          {/* Right: Actions & Profile */}
-          <div className="flex items-center gap-2">
+          {/* Right: Profile Menu */}
+          <div className="flex items-center gap-1 flex-shrink-0">
             {user && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => router.push('/upload')}
-                  title="Upload"
-                >
-                  <Upload className="h-5 w-5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => router.push('/bookmarks')}
-                  title="Bookmarks"
-                >
-                  <Bookmark className="h-5 w-5" />
-                </Button>
-              </>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push('/upload')}
+                className="hidden sm:flex h-8 gap-2"
+              >
+                <Upload className="h-4 w-4" />
+                <span className="text-sm">Upload</span>
+              </Button>
             )}
 
             {/* User Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <User className="h-5 w-5" />
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <User className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 {user ? (
                   <>
-                    <div className="px-2 py-1.5 text-sm">
-                      <p className="font-medium truncate">{user.email}</p>
+                    <div className="px-2 py-1.5 text-xs text-gray-500">
+                      <p className="font-medium truncate text-gray-700 dark:text-gray-300">{user.email}</p>
                     </div>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => router.push('/upload')} className="sm:hidden">
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload Lesson
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => router.push('/my-uploads')}>
                       My Uploads
                     </DropdownMenuItem>
