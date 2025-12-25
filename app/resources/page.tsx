@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search as SearchIcon, Sliders } from 'lucide-react';
+import { Search as SearchIcon } from 'lucide-react';
 
 type Lesson = {
   id: string;
@@ -39,7 +39,6 @@ export default function ResourcesPage() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showFilters, setShowFilters] = useState(false);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -121,71 +120,55 @@ export default function ResourcesPage() {
           </div>
 
           {/* Filters Section */}
-          <div className="bg-gray-50 dark:bg-slate-900/50 rounded-lg p-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Filters</h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowFilters(!showFilters)}
-                className="lg:hidden"
-              >
-                {showFilters ? 'Hide' : 'Show'}
-              </Button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div>
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-2">
+                Subject
+              </label>
+              <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+                <SelectTrigger className="h-10 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg text-sm">
+                  <SelectValue placeholder="All Subjects" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Subjects</SelectItem>
+                  {subjects.map((subject) => (
+                    <SelectItem key={subject.id} value={subject.id}>
+                      {subject.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            {showFilters && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                <div>
-                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-2">
-                    Subject
-                  </label>
-                  <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-                    <SelectTrigger className="h-9 bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-700 rounded-md text-sm">
-                      <SelectValue placeholder="All Subjects" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Subjects</SelectItem>
-                      {subjects.map((subject) => (
-                        <SelectItem key={subject.id} value={subject.id}>
-                          {subject.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+            <div>
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-2">
+                Sort By
+              </label>
+              <Select value={sortBy} onValueChange={(val) => setSortBy(val as any)}>
+                <SelectTrigger className="h-10 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg text-sm">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="views">Most Popular</SelectItem>
+                  <SelectItem value="recent">Newest First</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-                <div>
-                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-2">
-                    Sort By
-                  </label>
-                  <Select value={sortBy} onValueChange={(val) => setSortBy(val as any)}>
-                    <SelectTrigger className="h-9 bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-700 rounded-md text-sm">
-                      <SelectValue placeholder="Sort by" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="views">Most Popular</SelectItem>
-                      <SelectItem value="recent">Newest First</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {(searchQuery || selectedSubject !== 'all' || sortBy !== 'views') && (
-                  <div className="flex items-end">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setSearchQuery('');
-                        setSelectedSubject('all');
-                        setSortBy('views');
-                      }}
-                      className="w-full h-9"
-                    >
-                      Clear Filters
-                    </Button>
-                  </div>
-                )}
+            {(searchQuery || selectedSubject !== 'all' || sortBy !== 'views') && (
+              <div className="flex items-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSelectedSubject('all');
+                    setSortBy('views');
+                  }}
+                  className="w-full h-10"
+                >
+                  Clear Filters
+                </Button>
               </div>
             )}
           </div>
