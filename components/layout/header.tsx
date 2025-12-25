@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
-import { Search, Menu, User, LogOut, LogIn, BookOpen, Tags } from 'lucide-react';
+import { Search, Menu, User, LogOut, LogIn, Upload, Bookmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -14,7 +13,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 
 type HeaderProps = {
@@ -24,60 +22,131 @@ type HeaderProps = {
 
 export function Header({ onMenuClick, sidebarOpen = false }: HeaderProps) {
   const router = useRouter();
-  const { user, isAdmin } = useAuth();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
-  const [suggestions, setSuggestions] = useState<{
-    lessons: { id: string; title: string; slug: string; subject?: { name?: string } | null }[];
-    subjects: { id: string; name: string; slug: string }[];
-  }>({ lessons: [], subjects: [] });
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery('');
     }
   };
 
-  const handleSignOut = async () => {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-    const sb = createClient(supabaseUrl, supabaseAnonKey);
-    await sb.auth.signOut();
-    router.push('/');
-  };
+  return (
+    <header className="sticky top-0 z-50 bg-white dark:bg-slate-950 border-b border-gray-200 dark:border-slate-800">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 gap-4">
+          {/* Left: Logo & Menu */}
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onMenuClick}
+              className="lg:hidden"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            <Link href="/" className="flex items-center gap-2 font-bold text-xl">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white text-sm font-bold">
+                F
+              </div>
+              <span className="hidden sm:inline">Faculty</span>
+            </Link>
+          </div>
 
-  // Fetch suggestions for lessons and subjects as user types
-  useEffect(() => {
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
+          {/* Center: Search */}
+          <form onSubmit={handleSearch} className="flex-1 max-w-md">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                type="search"
+                placeholder="Search lessons..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 h-10 bg-gray-100 dark:bg-slate-800 border-0 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500"
+              />
+            </div>
+          </form>
 
-    if (!searchQuery.trim()) {
-      setSuggestions({ lessons: [], subjects: [] });
-      setShowSuggestions(false);
-      return;
-    }
+          {/* Right: Actions & Profile */}
+          <div className="flex items-center gap-2">
+            {user && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => router.push('/upload')}
+                  title="Upload"
+                >
+                  <Upload className="h-5 w-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => router.push('/bookmarks')}
+                  title="Bookmarks"
+                >
+                  <Bookmark className="h-5 w-5" />
+                </Button>
+              </>
+            )}
 
-    setLoadingSuggestions(true);
-
-    debounceRef.current = setTimeout(async () => {
-      try {
-        const query = searchQuery.trim();
-
-        const [lessonsRes, subjectsRes] = await Promise.all([
-          supabase
-            .from('lessons')
-            .select('id, title, slug, subject:subjects!inner(name)')
-            .eq('is_published', true)
-            .or(`title.ilike.%${query}%,content.ilike.%${query}%`)
-            .order('views', { ascending: false })
-            .limit(5),
-          supabase
-            .from('subjects')
-            .select('id, name, slug')
+            {/* User Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <User className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                {user ? (
+                  <>
+                    <div className="px-2 py-1.5 text-sm">
+                      <p className="font-medium truncate">{user.email}</p>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => router.push('/my-uploads')}>
+                      My Uploads
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push('/bookmarks')}>
+                      Saved Lessons
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={async () => {
+                        try {
+                          await fetch('/api/auth/logout', { method: 'POST' });
+                          router.push('/');
+                          router.refresh();
+                        } catch (error) {
+                          console.error('Logout error:', error);
+                        }
+                      }}
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <>
+                    <DropdownMenuItem onClick={() => router.push('/auth/login')}>
+                      <LogIn className="h-4 w-4 mr-2" />
+                      Sign In
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push('/auth/signup')}>
+                      Create Account
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
             .ilike('name', `%${query}%`)
             .order('order_index')
             .limit(5),
