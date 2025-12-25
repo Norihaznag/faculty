@@ -6,18 +6,16 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const search = searchParams.get('search');
 
-    let where = { published: true };
-
-    if (search) {
-      where = {
-        ...where,
+    const where: any = {
+      published: true,
+      ...(search && {
         OR: [
           { title: { contains: search, mode: 'insensitive' } },
           { description: { contains: search, mode: 'insensitive' } },
           { content: { contains: search, mode: 'insensitive' } },
         ],
-      };
-    }
+      }),
+    };
 
     const lessons = await prisma.lesson.findMany({
       where,
