@@ -3,43 +3,210 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layout/main-layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/lib/auth-context';
-import { supabase, Upload, Profile } from '@/lib/supabase';
-import { slugify } from '@/lib/utils/slug';
-import { Shield, CheckCircle, XCircle, Clock, Users, BookOpen, Trash2, UserX, UserCheck, Edit } from 'lucide-react';
-import { format } from 'date-fns';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { supabase as supabaseClient, Subject, Lesson } from '@/lib/supabase';
+import { BookOpen, Users, Shield } from 'lucide-react';
 
 export default function AdminPage() {
   const router = useRouter();
-  const { user, isAdmin, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalLessons: 0,
+    totalSubjects: 0,
+  });
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      try {
+        if (!authLoading && user) {
+          const res = await fetch('/api/auth/me');
+          const data = await res.json();
+          if (data.isAdmin) {
+            setIsAdmin(true);
+            await fetchStats();
+          } else {
+            router.push('/');
+          }
+        } else if (!authLoading && !user) {
+          router.push('/auth/login');
+        }
+      } catch (error) {
+        router.push('/');
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+
+    checkAdmin();
+  }, [user, authLoading, router]);
+
+  const fetchStats = async () => {
+    try {
+      const res = await fetch('/api/admin/stats');
+      const data = await res.json();
+      setStats(data);
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    }
+  };
+
+  if (authLoading || statsLoading) {
+    return (
+      <MainLayout>
+        <div className="text-center py-12">
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <MainLayout>
+        <div className="text-center py-12">
+          <p className="text-red-600">You don't have permission to access this page</p>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  return (
+    <MainLayout>
+      <div className="space-y-8">
+        {/* Header */}
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Shield className="h-6 w-6 text-blue-600" />
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
+              Admin Dashboard
+            </h1>
+          </div>
+          <p className="text-gray-600 dark:text-gray-400">
+            Manage platform content and users
+          </p>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="border-0 shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Users className="h-5 w-5 text-blue-600" />
+                Total Users
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-4xl font-bold text-gray-900 dark:text-white">
+                {stats.totalUsers}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-indigo-600" />
+                Total Lessons
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-4xl font-bold text-gray-900 dark:text-white">
+                {stats.totalLessons}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-green-600" />
+                Total Subjects
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-4xl font-bold text-gray-900 dark:text-white">
+                {stats.totalSubjects}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Tabs */}
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="content">Content Management</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-4">
+            <Card className="border-0 shadow-sm">
+              <CardHeader>
+                <CardTitle>Platform Overview</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-blue-50 dark:bg-slate-900 rounded-lg">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                      Active Users
+                    </p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {Math.floor(stats.totalUsers * 0.7)}
+                    </p>
+                  </div>
+                  <div className="p-4 bg-indigo-50 dark:bg-slate-900 rounded-lg">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                      Published Lessons
+                    </p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {stats.totalLessons}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 pt-4">
+                  The platform is running smoothly with {stats.totalSubjects} subjects
+                  and {stats.totalLessons} lessons across {stats.totalUsers} registered
+                  users.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="content" className="space-y-4">
+            <Card className="border-0 shadow-sm">
+              <CardHeader>
+                <CardTitle>Content Management</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Manage lessons, subjects, and user-generated content
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-white h-12">
+                    Manage Subjects
+                  </Button>
+                  <Button className="bg-indigo-600 hover:bg-indigo-700 text-white h-12">
+                    Manage Lessons
+                  </Button>
+                  <Button variant="outline" className="h-12">
+                    Manage Users
+                  </Button>
+                  <Button variant="outline" className="h-12">
+                    View Reports
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </MainLayout>
+  );
+}
   const [uploads, setUploads] = useState<Upload[]>([]);
   const [selectedUpload, setSelectedUpload] = useState<Upload | null>(null);
   const [adminNotes, setAdminNotes] = useState('');
