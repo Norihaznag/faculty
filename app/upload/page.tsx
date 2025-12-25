@@ -13,35 +13,166 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/lib/auth-context';
 import { Upload, CheckCircle, AlertCircle } from 'lucide-react';
 
+interface University {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+interface Faculty {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+interface Program {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+interface Semester {
+  id: string;
+  name: string;
+  order: number;
+}
+
+interface Subject {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 export default function UploadPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const [subjects, setSubjects] = useState<{ id: string; name: string }[]>([]);
+
+  // Hierarchical state
+  const [universities, setUniversities] = useState<University[]>([]);
+  const [faculties, setFaculties] = useState<Faculty[]>([]);
+  const [programs, setPrograms] = useState<Program[]>([]);
+  const [semesters, setSemesters] = useState<Semester[]>([]);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+
+  // Form selections
+  const [selectedUni, setSelectedUni] = useState('');
+  const [selectedFaculty, setSelectedFaculty] = useState('');
+  const [selectedProgram, setSelectedProgram] = useState('');
+  const [selectedSemester, setSelectedSemester] = useState('');
+  const [subjectId, setSubjectId] = useState('');
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [subjectId, setSubjectId] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Load universities on mount
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/auth/login');
       return;
     }
 
+    const fetchUniversities = async () => {
+      try {
+        const res = await fetch('/api/universities');
+        const data = await res.json();
+        setUniversities(data || []);
+      } catch (err) {
+        console.error('Failed to fetch universities');
+      }
+    };
+
+    fetchUniversities();
+  }, [user, authLoading, router]);
+
+  // Load faculties when university changes
+  useEffect(() => {
+    if (!selectedUni) {
+      setFaculties([]);
+      setSelectedFaculty('');
+      return;
+    }
+
+    const fetchFaculties = async () => {
+      try {
+        const res = await fetch(`/api/universities/${selectedUni}`);
+        const data = await res.json();
+        setFaculties(data.faculties || []);
+      } catch (err) {
+        console.error('Failed to fetch faculties');
+      }
+    };
+
+    fetchFaculties();
+  }, [selectedUni]);
+
+  // Load programs when faculty changes
+  useEffect(() => {
+    if (!selectedUni || !selectedFaculty) {
+      setPrograms([]);
+      setSelectedProgram('');
+      return;
+    }
+
+    const fetchPrograms = async () => {
+      try {
+        const res = await fetch(`/api/universities/${selectedUni}/faculty/${selectedFaculty}`);
+        const data = await res.json();
+        setPrograms(data.programs || []);
+      } catch (err) {
+        console.error('Failed to fetch programs');
+      }
+    };
+
+    fetchPrograms();
+  }, [selectedUni, selectedFaculty]);
+
+  // Load semesters when program changes
+  useEffect(() => {
+    if (!selectedUni || !selectedFaculty || !selectedProgram) {
+      setSemesters([]);
+      setSelectedSemester('');
+      return;
+    }
+
+    const fetchSemesters = async () => {
+      try {
+        const res = await fetch(`/api/universities/${selectedUni}/faculty/${selectedFaculty}/program/${selectedProgram}`);
+        const data = await res.json();
+        setSemesters(data.semesters || []);
+      } catch (err) {
+        console.error('Failed to fetch semesters');
+      }
+    };
+
+    fetchSemesters();
+  }, [selectedUni, selectedFaculty, selectedProgram]);
+
+  // Load subjects when semester changes
+  useEffect(() => {
+    if (!selectedUni || !selectedFaculty || !selectedProgram || !selectedSemester) {
+      setSubjects([]);
+      setSubjectId('');
+      return;
+    }
+
     const fetchSubjects = async () => {
       try {
-        const res = await fetch('/api/subjects');
+        const res = await fetch(
+          `/api/universities/${selectedUni}/faculty/${selectedFaculty}/program/${selectedProgram}/semester/${selectedSemester}`
+        );
         const data = await res.json();
-        setSubjects(data.subjects || data || []);
+        setSubjects(data.subjects || []);
       } catch (err) {
         console.error('Failed to fetch subjects');
       }
     };
 
     fetchSubjects();
-  }, [user, authLoading, router]);
+  }, [selectedUni, selectedFaculty, selectedProgram, selectedSemester]);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,6 +212,10 @@ export default function UploadPage() {
       setTitle('');
       setDescription('');
       setSubjectId('');
+      setSelectedUni('');
+      setSelectedFaculty('');
+      setSelectedProgram('');
+      setSelectedSemester('');
 
       setTimeout(() => {
         setSuccess(false);
@@ -134,6 +269,104 @@ export default function UploadPage() {
               )}
 
               <div className="space-y-2">
+                <Label htmlFor="university" className="text-base font-semibold">
+                  University *
+                </Label>
+                <Select value={selectedUni} onValueChange={setSelectedUni} disabled={loading}>
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder="Select a university..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {universities.map((uni) => (
+                      <SelectItem key={uni.id} value={uni.slug}>
+                        {uni.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {selectedUni && (
+                <div className="space-y-2">
+                  <Label htmlFor="faculty" className="text-base font-semibold">
+                    Faculty *
+                  </Label>
+                  <Select value={selectedFaculty} onValueChange={setSelectedFaculty} disabled={loading || !selectedUni}>
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="Select a faculty..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {faculties.map((fac) => (
+                        <SelectItem key={fac.id} value={fac.slug}>
+                          {fac.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {selectedFaculty && (
+                <div className="space-y-2">
+                  <Label htmlFor="program" className="text-base font-semibold">
+                    Program *
+                  </Label>
+                  <Select value={selectedProgram} onValueChange={setSelectedProgram} disabled={loading || !selectedFaculty}>
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="Select a program..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {programs.map((prog) => (
+                        <SelectItem key={prog.id} value={prog.slug}>
+                          {prog.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {selectedProgram && (
+                <div className="space-y-2">
+                  <Label htmlFor="semester" className="text-base font-semibold">
+                    Semester *
+                  </Label>
+                  <Select value={selectedSemester} onValueChange={setSelectedSemester} disabled={loading || !selectedProgram}>
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="Select a semester..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {semesters.map((sem) => (
+                        <SelectItem key={sem.id} value={sem.name.toLowerCase().replace(/\s+/g, '-')}>
+                          {sem.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {selectedSemester && (
+                <div className="space-y-2">
+                  <Label htmlFor="subject" className="text-base font-semibold">
+                    Subject *
+                  </Label>
+                  <Select value={subjectId} onValueChange={setSubjectId} disabled={loading || !selectedSemester}>
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="Select a subject..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {subjects.map((subject) => (
+                        <SelectItem key={subject.id} value={subject.id}>
+                          {subject.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="space-y-2">
                 <Label htmlFor="title" className="text-base font-semibold">
                   Lesson Title *
                 </Label>
@@ -147,24 +380,6 @@ export default function UploadPage() {
                   disabled={loading}
                   className="h-10"
                 />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="subject" className="text-base font-semibold">
-                  Subject *
-                </Label>
-                <Select value={subjectId} onValueChange={setSubjectId} disabled={loading}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select a subject..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {subjects.map((subject) => (
-                      <SelectItem key={subject.id} value={subject.id}>
-                        {subject.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
 
               <div className="space-y-2">
@@ -184,7 +399,7 @@ export default function UploadPage() {
 
               <Button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !subjectId}
                 className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base"
               >
                 {loading ? 'Uploading...' : 'Upload Lesson'}
