@@ -1,76 +1,103 @@
-import { supabase } from '@/lib/supabase';
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/nextauth';
+import prisma from '@/lib/db';
 
-export async function GET(req: NextRequest) {
+// Check if user is admin
+async function checkAdmin(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return null;
+  }
+  const user = await prisma.user.findUnique({
+    where: { id: (session.user as any).id },
+  });
+  if (user?.role !== 'admin') {
+    return null;
+  }
+  return user;
+}
+
+// GET: List all subjects
+export async function GET(request: NextRequest) {
   try {
-    // Get auth header for server-side auth
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const admin = await checkAdmin(request);
+    if (!admin) {
+      return NextResponse.json({ error: 'Unauthorized - Admin only' }, { status: 401 });
     }
 
-    // For now, allow authenticated requests
-    // In production, verify the token properly
+    const { searchParams } = new URL(request.url);
+    const search = searchParams.get('search');
 
-    // Get all subjects
-    const { data: subjects, error } = await supabase
-      .from('subjects')
-      .select('*')
-      .order('order_index');
+    const where: any = {};
+    if (search) {
+      where.name = { contains: search, mode: 'insensitive' };
+    }
 
-    if (error) throw error;
+    const subjects = await prisma.subject.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        _count: { select: { lessons: true } },
+      },
+      orderBy: { name: 'asc' },
+    });
 
-    return NextResponse.json(subjects);
+    return NextResponse.json({ subjects });
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to fetch subjects' },
-      { status: 500 }
-    );
+    console.error('Error fetching subjects:', error);
+    return NextResponse.json({ error: 'Failed to fetch subjects' }, { status: 500 });
   }
 }
 
-export async function POST(req: NextRequest) {
+// POST: Create new subject
+export async function POST(request: NextRequest) {
   try {
-    // Get auth header for server-side auth
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const admin = await checkAdmin(request);
+    if (!admin) {
+      return NextResponse.json({ error: 'Unauthorized - Admin only' }, { status: 401 });
     }
 
-    // For now, allow authenticated requests
-    // In production, verify the token properly
+    const body = await request.json();
+    const { name } = body;
 
-    const body = await req.json();
-    const { name, slug, description, icon, order_index } = body;
-
-    if (!name || !slug) {
-      return NextResponse.json(
-        { error: 'Name and slug are required' },
-        { status: 400 }
-      );
+    if (!name) {
+      return NextResponse.json({ error: 'Subject name required' }, { status: 400 });
     }
 
-    // Create subject
-    const { data: subject, error } = await supabase
-      .from('subjects')
-      .insert({
+    // Check if subject already exists
+    const existing = await prisma.subject.findFirst({
+      where: { name: { equals: name, mode: 'insensitive' } },
+    });
+
+    if (existing) {
+      return NextResponse.json({ error: 'Subject already exists' }, { status: 409 });
+    }
+
+    // Generate slug
+    const slug = name
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w-]/g, '');
+
+    const subject = await prisma.subject.create({
+      data: {
         name,
         slug,
-        description,
-        icon,
-        order_index: order_index || 0,
-      })
-      .select()
-      .single();
+      },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+      },
+    });
 
-    if (error) throw error;
-
-    return NextResponse.json(subject, { status: 201 });
+    return NextResponse.json({ subject }, { status: 201 });
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to create subject' },
-      { status: 500 }
-    );
+    console.error('Error creating subject:', error);
+    return NextResponse.json({ error: 'Failed to create subject' }, { status: 500 });
   }
 }
 

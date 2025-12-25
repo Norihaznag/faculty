@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { MainLayout } from '@/components/layout/main-layout';
+import { signOut } from 'next-auth/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,13 +19,12 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/lib/auth-context';
+import { AdminLayout } from '@/components/layout/admin-layout';
 import {
   Shield,
   Users,
   BookOpen,
   BarChart3,
-  CheckCircle,
-  Clock,
   Trash2,
   Edit2,
   Plus,
@@ -33,6 +32,8 @@ import {
   AlertCircle,
   CheckIcon,
   XIcon,
+  LogOut,
+  Menu,
 } from 'lucide-react';
 
 type Stats = {
@@ -62,6 +63,13 @@ type Lesson = {
   views: number;
   subject?: { id: string; name: string };
   author?: { id: string; name: string; email: string };
+};
+
+type Subject = {
+  id: string;
+  name: string;
+  slug: string;
+  _count?: { lessons: number };
 };
 
 type Upload = {
@@ -102,6 +110,14 @@ export default function AdminPage() {
   const [loadingUploads, setLoadingUploads] = useState(true);
   const [uploadFilter, setUploadFilter] = useState('pending');
 
+  // Subject Management State
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [loadingSubjects, setLoadingSubjects] = useState(true);
+  const [searchSubject, setSearchSubject] = useState('');
+  const [showNewSubjectForm, setShowNewSubjectForm] = useState(false);
+  const [newSubjectForm, setNewSubjectForm] = useState({ name: '' });
+  const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
+
   // Forms
   const [showNewUserForm, setShowNewUserForm] = useState(false);
   const [newUserForm, setNewUserForm] = useState({ email: '', name: '', role: 'student' });
@@ -132,6 +148,7 @@ export default function AdminPage() {
       fetchLessons();
       fetchModerators();
       fetchUploads();
+      fetchSubjects();
     }
   }, [isAdmin]);
 
@@ -195,6 +212,22 @@ export default function AdminPage() {
       setError('Failed to fetch uploads');
     } finally {
       setLoadingUploads(false);
+    }
+  };
+
+  const fetchSubjects = async () => {
+    try {
+      setLoadingSubjects(true);
+      const url = new URL('/api/admin/subjects', window.location.origin);
+      if (searchSubject) url.searchParams.set('search', searchSubject);
+
+      const res = await fetch(url);
+      const data = await res.json();
+      setSubjects(data.subjects || []);
+    } catch (err) {
+      setError('Failed to fetch subjects');
+    } finally {
+      setLoadingSubjects(false);
     }
   };
 
@@ -365,11 +398,83 @@ export default function AdminPage() {
     }
   };
 
+  // SUBJECT OPERATIONS
+  const handleCreateSubject = async () => {
+    try {
+      setError('');
+      if (!newSubjectForm.name.trim()) {
+        setError('Subject name required');
+        return;
+      }
+
+      const res = await fetch('/api/admin/subjects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newSubjectForm),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to create subject');
+      }
+
+      setSuccess('Subject created successfully');
+      setNewSubjectForm({ name: '' });
+      setShowNewSubjectForm(false);
+      fetchSubjects();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleUpdateSubject = async () => {
+    try {
+      setError('');
+      if (!editingSubject || !editingSubject.name.trim()) {
+        setError('Subject name required');
+        return;
+      }
+
+      const res = await fetch(`/api/admin/subjects/${editingSubject.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: editingSubject.name }),
+      });
+
+      if (!res.ok) throw new Error('Failed to update subject');
+
+      setSuccess('Subject updated successfully');
+      setEditingSubject(null);
+      fetchSubjects();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleDeleteSubject = async (subjectId: string) => {
+    try {
+      if (!confirm('Delete this subject? This cannot be undone.')) return;
+
+      setError('');
+      const res = await fetch(`/api/admin/subjects/${subjectId}`, { method: 'DELETE' });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to delete subject');
+      }
+
+      setSuccess('Subject deleted successfully');
+      fetchSubjects();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
   if (authLoading) {
     return (
-      <MainLayout>
+      <AdminLayout>
         <div className="text-center py-12">Loading...</div>
-      </MainLayout>
+      </AdminLayout>
     );
   }
 
@@ -378,7 +483,7 @@ export default function AdminPage() {
   }
 
   return (
-    <MainLayout>
+    <AdminLayout>
       <div className="max-w-7xl mx-auto space-y-8 pb-8">
         {/* Header */}
         <div className="text-center mb-12">
@@ -460,8 +565,9 @@ export default function AdminPage() {
 
         {/* Main Tabs */}
         <Tabs defaultValue="uploads" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-1 md:grid-cols-4 gap-2">
+          <TabsList className="grid w-full grid-cols-1 md:grid-cols-5 gap-2">
             <TabsTrigger value="uploads">Content Moderation</TabsTrigger>
+            <TabsTrigger value="subjects">Subjects</TabsTrigger>
             <TabsTrigger value="lessons">Lessons</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="moderators">Moderators</TabsTrigger>
@@ -628,6 +734,175 @@ export default function AdminPage() {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          {/* SUBJECTS TAB */}
+          <TabsContent value="subjects" className="space-y-4">
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Manage Subjects</CardTitle>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                    Create, edit, or delete subjects
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setShowNewSubjectForm(!showNewSubjectForm)}
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  New Subject
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Create Subject Form */}
+                {showNewSubjectForm && (
+                  <Card className="border-2 border-green-500 bg-green-50 dark:bg-green-900/20">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Create New Subject</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <Label htmlFor="subject-name">Subject Name</Label>
+                        <Input
+                          id="subject-name"
+                          placeholder="e.g., Mathematics, Physics, Chemistry"
+                          value={newSubjectForm.name}
+                          onChange={(e) =>
+                            setNewSubjectForm({ ...newSubjectForm, name: e.target.value })
+                          }
+                          className="mt-2"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          className="flex-1"
+                          onClick={handleCreateSubject}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create Subject
+                        </Button>
+                        <Button
+                          className="flex-1"
+                          variant="outline"
+                          onClick={() => {
+                            setShowNewSubjectForm(false);
+                            setNewSubjectForm({ name: '' });
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Edit Subject Form */}
+                {editingSubject && (
+                  <Card className="border-2 border-orange-500 bg-orange-50 dark:bg-orange-900/20">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Edit Subject</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <Label htmlFor="edit-subject-name">Subject Name</Label>
+                        <Input
+                          id="edit-subject-name"
+                          placeholder="Subject name"
+                          value={editingSubject.name}
+                          onChange={(e) =>
+                            setEditingSubject({ ...editingSubject, name: e.target.value })
+                          }
+                          className="mt-2"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          className="flex-1"
+                          onClick={handleUpdateSubject}
+                        >
+                          <Edit2 className="h-4 w-4 mr-2" />
+                          Save Changes
+                        </Button>
+                        <Button
+                          className="flex-1"
+                          variant="outline"
+                          onClick={() => setEditingSubject(null)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Search */}
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Search subjects..."
+                    value={searchSubject}
+                    onChange={(e) => setSearchSubject(e.target.value)}
+                    onKeyUp={(e) => {
+                      if (e.key === 'Enter') fetchSubjects();
+                    }}
+                    className="flex-1"
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSearchSubject('');
+                      fetchSubjects();
+                    }}
+                  >
+                    Clear
+                  </Button>
+                </div>
+
+                {/* Subjects List */}
+                {loadingSubjects ? (
+                  <p className="text-center text-gray-500">Loading subjects...</p>
+                ) : subjects.length === 0 ? (
+                  <p className="text-gray-600 dark:text-gray-400">No subjects found</p>
+                ) : (
+                  <div className="space-y-2">
+                    {subjects.map((subject) => (
+                      <div
+                        key={subject.id}
+                        className="p-4 bg-gray-50 dark:bg-slate-800/50 rounded-lg flex items-center justify-between"
+                      >
+                        <div className="flex-1">
+                          <h4 className="font-semibold">{subject.name}</h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Slug: {subject.slug}
+                          </p>
+                          {subject._count && (
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                              {subject._count.lessons} lesson{subject._count.lessons !== 1 ? 's' : ''}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setEditingSubject(subject)}
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDeleteSubject(subject.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* LESSONS TAB */}
@@ -1040,6 +1315,6 @@ export default function AdminPage() {
           </TabsContent>
         </Tabs>
       </div>
-    </MainLayout>
+    </AdminLayout>
   );
 }
