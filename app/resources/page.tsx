@@ -174,15 +174,16 @@ export default function ResourcesPage() {
 
         {/* Main Content */}
         <div className="lg:col-span-3 space-y-6">
-        {/* Search Bar */}
-          <div className="relative">
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
+          {/* Search Bar */}
+          <div className="relative w-full">
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted pointer-events-none" />
             <Input
               placeholder="Search lessons, topics, keywords..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 w-full"
+              className="pl-10 w-full h-12 text-base md:text-sm"
             />
+          </div>
           </div>
 
           {/* Header */}
