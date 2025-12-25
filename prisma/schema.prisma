@@ -236,7 +236,8 @@ model Upload {
   fileUrl     String
   mimeType    String
   size        Int      // in bytes
-  status      String   @default("pending") // "pending", "processing", "published", "rejected"
+  status      String   @default("pending") // "pending", "approved", "rejected"
+  reason      String?  @db.Text // Reason for approval/rejection
   lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   lessonId    String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)

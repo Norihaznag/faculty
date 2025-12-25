@@ -56,7 +56,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         where: { id: params.id },
         data: {
           status: 'approved',
-          reason: reason || '',
+          ...(reason && { reason }),
         },
         select: {
           id: true,
@@ -78,7 +78,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         where: { id: params.id },
         data: {
           status: 'rejected',
-          reason: reason || 'No reason provided',
+          ...(reason && { reason }),
         },
         select: {
           id: true,
