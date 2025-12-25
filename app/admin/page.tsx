@@ -135,14 +135,17 @@ export default function AdminPage() {
 
   // Authorization check
   useEffect(() => {
-    if (!authLoading && !isAdmin) {
+    // Only redirect if we're done loading AND user exists AND is definitely not admin
+    if (!authLoading && user && !isAdmin) {
+      console.log('Not admin, redirecting to home. User role:', (user as any).role);
       router.push('/');
     }
-  }, [isAdmin, authLoading, router]);
+  }, [isAdmin, authLoading, router, user]);
 
   // Fetch stats
   useEffect(() => {
-    if (isAdmin) {
+    if (isAdmin && user) {
+      console.log('User is admin, fetching data. User:', user);
       fetchStats();
       fetchUsers();
       fetchLessons();
@@ -150,7 +153,7 @@ export default function AdminPage() {
       fetchUploads();
       fetchSubjects();
     }
-  }, [isAdmin]);
+  }, [isAdmin, user]);
 
   const fetchStats = async () => {
     try {

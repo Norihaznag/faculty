@@ -33,6 +33,7 @@ export default function LoginPage() {
       if (result?.error) {
         setError(result.error);
       } else if (result?.ok) {
+        // Redirect to admin if user is admin, otherwise to home
         router.push('/');
       }
     } catch (err) {
