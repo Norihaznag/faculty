@@ -1,5 +1,8 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
+import { signOut } from 'next-auth/react';
 import { Shield, Users, BookOpen, BarChart3, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -16,6 +19,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     { icon: Users, label: 'Users', href: '#users' },
     { icon: Users, label: 'Moderators', href: '#moderators' },
   ];
+
+  const handleSignOut = async () => {
+    await signOut({ redirect: true, callbackUrl: '/' });
+  };
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-950">
@@ -54,10 +61,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           <Button
             variant="outline"
             className="w-full text-blue-100 border-blue-700 hover:bg-blue-800"
-            onClick={async () => {
-              await fetch('/api/auth/signout', { method: 'POST' });
-              window.location.href = '/';
-            }}
+            onClick={handleSignOut}
           >
             <LogOut className="h-4 w-4 mr-2" />
             Sign Out
