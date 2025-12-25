@@ -128,7 +128,7 @@ export default function SearchPage() {
                   className="group"
                 >
                   <Card className="h-full border-0 shadow-sm hover:shadow-md transition-all">
-                    <div className="h-1 bg-gradient-to-r from-blue-400 to-indigo-600"></div>
+                    <div className="h-1 bg-gradient-to-r from-blue-400 to-indigo-600" />
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <CardTitle className="text-base font-semibold group-hover:text-blue-600 transition-colors line-clamp-2">
@@ -170,41 +170,6 @@ export default function SearchPage() {
               </div>
             </CardContent>
           </Card>
-        )}
-      </div>
-    </MainLayout>
-  );
-}
-                  className="group"
-                >
-                  <Card className="h-full transition-all hover:shadow-lg">
-                    <CardHeader>
-                      <div className="flex items-start justify-between gap-2">
-                        <CardTitle className="group-hover:text-primary transition-colors line-clamp-2 text-base sm:text-lg">
-                          {lesson.title}
-                        </CardTitle>
-                        {lesson.is_premium && (
-                          <Badge variant="secondary" className="shrink-0 text-xs">Premium</Badge>
-                        )}
-                      </div>
-                      <CardDescription className="text-xs sm:text-sm">
-                        {lesson.subject?.name}
-                        {lesson.semester && ` • ${lesson.semester}`}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center gap-4 text-xs sm:text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <BookOpen className="h-4 w-4" />
-                          {lesson.views} views
-                        </span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          </>
         )}
       </div>
     </MainLayout>

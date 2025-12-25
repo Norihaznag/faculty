@@ -184,7 +184,6 @@ export default function ResourcesPage() {
               className="pl-10 w-full h-12 text-base md:text-sm"
             />
           </div>
-          </div>
 
           {/* Header */}
           <div>
