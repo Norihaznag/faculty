@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search as SearchIcon, BookOpen } from 'lucide-react';
+import { Search as SearchIcon, BookOpen, X } from 'lucide-react';
 
 type Lesson = {
   id: string;
@@ -24,7 +24,7 @@ type Lesson = {
   views: number;
   published: boolean;
   difficulty: string;
-  subject?: { id: string; name: string };
+  subject?: { id: string; name: string; slug: string };
   subjectId: string;
   createdAt?: Date | string;
 };
@@ -35,35 +35,155 @@ type Subject = {
   slug: string;
 };
 
+type University = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
+type Faculty = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
+type Semester = {
+  id: string;
+  name: string;
+  order: number;
+};
+
 export default function ResourcesPage() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [universities, setUniversities] = useState<University[]>([]);
+  const [faculties, setFaculties] = useState<Faculty[]>([]);
+  const [semesters, setSemesters] = useState<Semester[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Filters
+  // Hierarchical filters
+  const [selectedUni, setSelectedUni] = useState<string>('');
+  const [selectedFaculty, setSelectedFaculty] = useState<string>('');
+  const [selectedSemester, setSelectedSemester] = useState<string>('');
+  const [selectedSubject, setSelectedSubject] = useState<string>('');
+
+  // Other filters
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedSubject, setSelectedSubject] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'recent' | 'views'>('views');
 
+  // Fetch universities on mount
   useEffect(() => {
-    fetchData();
+    const fetchUniversities = async () => {
+      try {
+        const res = await fetch('/api/universities');
+        const data = await res.json();
+        setUniversities(data || []);
+      } catch (error) {
+        console.error('Error fetching universities:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUniversities();
   }, []);
 
-  const fetchData = async () => {
-    try {
-      const [lessonsRes, subjectsRes] = await Promise.all([
-        fetch('/api/lessons').then(r => r.json()),
-        fetch('/api/subjects').then(r => r.json()),
-      ]);
-
-      setLessons(lessonsRes.lessons || []);
-      setSubjects(subjectsRes.subjects || []);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
+  // Fetch faculties when university changes
+  useEffect(() => {
+    if (!selectedUni) {
+      setFaculties([]);
+      setSelectedFaculty('');
+      setSemesters([]);
+      setSelectedSemester('');
+      setSubjects([]);
+      setSelectedSubject('');
+      return;
     }
-  };
+
+    const fetchFaculties = async () => {
+      try {
+        const res = await fetch(`/api/universities/${selectedUni}`);
+        const data = await res.json();
+        setFaculties(data.faculties || []);
+        setSelectedFaculty('');
+        setSemesters([]);
+        setSelectedSemester('');
+        setSubjects([]);
+        setSelectedSubject('');
+      } catch (error) {
+        console.error('Error fetching faculties:', error);
+      }
+    };
+    fetchFaculties();
+  }, [selectedUni]);
+
+  // Fetch semesters when faculty changes
+  useEffect(() => {
+    if (!selectedUni || !selectedFaculty) {
+      setSemesters([]);
+      setSelectedSemester('');
+      setSubjects([]);
+      setSelectedSubject('');
+      return;
+    }
+
+    const fetchSemesters = async () => {
+      try {
+        const res = await fetch(`/api/universities/${selectedUni}/faculty/${selectedFaculty}`);
+        const data = await res.json();
+        // Extract unique semesters from all programs
+        const allSemesters = data.programs?.flatMap((p: any) => p.semesters || []) || [];
+        const uniqueSemesters = Array.from(
+          new Map(allSemesters.map((s: any) => [s.id, s])).values()
+        ) as Semester[];
+        setSemesters(uniqueSemesters.sort((a, b) => a.order - b.order));
+        setSelectedSemester('');
+        setSubjects([]);
+        setSelectedSubject('');
+      } catch (error) {
+        console.error('Error fetching semesters:', error);
+      }
+    };
+    fetchSemesters();
+  }, [selectedUni, selectedFaculty]);
+
+  // Fetch subjects when semester changes
+  useEffect(() => {
+    if (!selectedUni || !selectedFaculty || !selectedSemester) {
+      setSubjects([]);
+      setSelectedSubject('');
+      return;
+    }
+
+    const fetchSubjects = async () => {
+      try {
+        const res = await fetch(
+          `/api/universities/${selectedUni}/faculty/${selectedFaculty}/program/${selectedSemester.split('|')[1]}/semester/${selectedSemester.split('|')[0]}`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setSubjects(data.subjects || []);
+          setSelectedSubject('');
+        }
+      } catch (error) {
+        console.error('Error fetching subjects:', error);
+      }
+    };
+    fetchSubjects();
+  }, [selectedUni, selectedFaculty, selectedSemester]);
+
+  // Fetch lessons based on filters
+  useEffect(() => {
+    const fetchLessons = async () => {
+      try {
+        const res = await fetch('/api/lessons');
+        const data = await res.json();
+        setLessons(data.lessons || []);
+      } catch (error) {
+        console.error('Error fetching lessons:', error);
+      }
+    };
+    fetchLessons();
+  }, []);
 
   // Filter & search
   const filteredLessons = useMemo(() => {
@@ -80,7 +200,7 @@ export default function ResourcesPage() {
     }
 
     // Subject filter
-    if (selectedSubject && selectedSubject !== 'all') {
+    if (selectedSubject) {
       result = result.filter((lesson) => lesson.subjectId === selectedSubject);
     }
 
@@ -93,6 +213,8 @@ export default function ResourcesPage() {
 
     return result;
   }, [lessons, searchQuery, selectedSubject, sortBy]);
+
+  const hasActiveFilters = selectedUni || selectedFaculty || selectedSemester || selectedSubject || searchQuery || sortBy !== 'views';
 
   return (
     <MainLayout>
@@ -122,27 +244,96 @@ export default function ResourcesPage() {
             />
           </div>
 
-          {/* Filters Section */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            <div>
-              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-2">
-                Subject
-              </label>
-              <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-                <SelectTrigger className="h-10 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg text-sm">
-                  <SelectValue placeholder="All Subjects" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Subjects</SelectItem>
-                  {subjects.map((subject) => (
-                    <SelectItem key={subject.id} value={subject.id}>
-                      {subject.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Hierarchical Filters Section */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 p-4 rounded-lg border border-blue-200 dark:border-slate-600">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Filter by University Structure</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {/* University */}
+              <div>
+                <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-2">
+                  University
+                </label>
+                <Select value={selectedUni} onValueChange={setSelectedUni}>
+                  <SelectTrigger className="h-10 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg text-sm">
+                    <SelectValue placeholder="Select university..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {universities.map((uni) => (
+                      <SelectItem key={uni.id} value={uni.slug}>
+                        {uni.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
+              {/* Faculty */}
+              {selectedUni && (
+                <div>
+                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-2">
+                    Faculty
+                  </label>
+                  <Select value={selectedFaculty} onValueChange={setSelectedFaculty} disabled={!selectedUni}>
+                    <SelectTrigger className="h-10 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg text-sm disabled:opacity-50">
+                      <SelectValue placeholder="Select faculty..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {faculties.map((fac) => (
+                        <SelectItem key={fac.id} value={fac.slug}>
+                          {fac.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Semester */}
+              {selectedFaculty && (
+                <div>
+                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-2">
+                    Semester
+                  </label>
+                  <Select value={selectedSemester} onValueChange={setSelectedSemester} disabled={!selectedFaculty}>
+                    <SelectTrigger className="h-10 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg text-sm disabled:opacity-50">
+                      <SelectValue placeholder="Select semester..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {semesters.map((sem) => (
+                        <SelectItem key={sem.id} value={`${sem.name}|${sem.id}`}>
+                          {sem.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Subject */}
+              {selectedSemester && (
+                <div>
+                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-2">
+                    Subject
+                  </label>
+                  <Select value={selectedSubject} onValueChange={setSelectedSubject} disabled={!selectedSemester}>
+                    <SelectTrigger className="h-10 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg text-sm disabled:opacity-50">
+                      <SelectValue placeholder="Select subject..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {subjects.map((subj) => (
+                        <SelectItem key={subj.id} value={subj.id}>
+                          {subj.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Additional Filters & Clear */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <div>
               <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-2">
                 Sort By
@@ -158,24 +349,36 @@ export default function ResourcesPage() {
               </Select>
             </div>
 
-            {(searchQuery || selectedSubject !== 'all' || sortBy !== 'views') && (
+            {hasActiveFilters && (
               <div className="flex items-end">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => {
                     setSearchQuery('');
-                    setSelectedSubject('all');
+                    setSelectedUni('');
+                    setSelectedFaculty('');
+                    setSelectedSemester('');
+                    setSelectedSubject('');
                     setSortBy('views');
                   }}
-                  className="w-full h-10"
+                  className="w-full h-10 border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950"
                 >
-                  Clear Filters
+                  <X className="h-4 w-4 mr-1" />
+                  Clear All Filters
                 </Button>
               </div>
             )}
           </div>
         </form>
+
+        {/* Results Info */}
+        {filteredLessons.length > 0 && (
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            Showing <span className="font-semibold text-gray-900 dark:text-white">{filteredLessons.length}</span> lesson{filteredLessons.length !== 1 ? 's' : ''}
+            {selectedSubject && ` in ${subjects.find(s => s.id === selectedSubject)?.name}`}
+          </div>
+        )}
 
         {/* Lessons Grid */}
         {loading ? (
@@ -183,17 +386,21 @@ export default function ResourcesPage() {
             <p className="text-gray-600 dark:text-gray-400">Loading lessons...</p>
           </div>
         ) : filteredLessons.length === 0 ? (
-          <div className="text-center py-12">
+          <div className="text-center py-12 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
+            <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-600 dark:text-gray-400 mb-4">No lessons found matching your filters</p>
             <Button
               variant="outline"
               onClick={() => {
                 setSearchQuery('');
-                setSelectedSubject('all');
+                setSelectedUni('');
+                setSelectedFaculty('');
+                setSelectedSemester('');
+                setSelectedSubject('');
                 setSortBy('views');
               }}
             >
-              Reset Filters
+              Reset All Filters
             </Button>
           </div>
         ) : (
