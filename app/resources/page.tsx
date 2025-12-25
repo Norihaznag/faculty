@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search as SearchIcon } from 'lucide-react';
+import { Search as SearchIcon, BookOpen } from 'lucide-react';
 
 type Lesson = {
   id: string;
@@ -96,13 +96,16 @@ export default function ResourcesPage() {
 
   return (
     <MainLayout>
-      <div className="space-y-8">
+      <div className="max-w-7xl mx-auto space-y-8">
         {/* Header Section */}
-        <div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-blue-100 dark:bg-blue-900 mb-4">
+            <BookOpen className="h-7 w-7 text-blue-600 dark:text-blue-400" />
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-3">
             Browse All Lessons
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
+          <p className="text-lg text-gray-600 dark:text-gray-400">
             Explore {lessons.length} lessons from Morocco's top universities
           </p>
         </div>

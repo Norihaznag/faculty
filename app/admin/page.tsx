@@ -88,67 +88,79 @@ export default function AdminPage() {
 
   return (
     <MainLayout>
-      <div className="space-y-8">
+      <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <Shield className="h-8 w-8 text-blue-600" />
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
-              Admin Dashboard
-            </h1>
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-blue-100 dark:bg-blue-900 mb-4">
+            <Shield className="h-7 w-7 text-blue-600 dark:text-blue-400" />
           </div>
-          <p className="text-gray-600 dark:text-gray-400">
-            Manage your Faculty Hub platform
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-3">
+            Admin Dashboard
+          </h1>
+          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            Manage your Faculty Hub platform and monitor activity
           </p>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Total Users
-              </CardTitle>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 border-0 shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Total Users
+                </CardTitle>
+                <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{stats.users}</div>
+              <div className="text-4xl font-bold text-blue-600 dark:text-blue-400">{stats.users}</div>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">Active contributors</p>
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                <BookOpen className="h-4 w-4" />
-                Total Lessons
-              </CardTitle>
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900 dark:to-green-800 border-0 shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Total Lessons
+                </CardTitle>
+                <BookOpen className="h-5 w-5 text-green-600 dark:text-green-400" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{stats.lessons}</div>
+              <div className="text-4xl font-bold text-green-600 dark:text-green-400">{stats.lessons}</div>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">Published content</p>
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                <BookOpen className="h-4 w-4" />
-                Subjects
-              </CardTitle>
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900 dark:to-purple-800 border-0 shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Subjects
+                </CardTitle>
+                <BookOpen className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{stats.subjects}</div>
+              <div className="text-4xl font-bold text-purple-600 dark:text-purple-400">{stats.subjects}</div>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">Organized topics</p>
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                <BarChart3 className="h-4 w-4" />
-                Uploads
-              </CardTitle>
+          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900 dark:to-orange-800 border-0 shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Pending
+                </CardTitle>
+                <BarChart3 className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{stats.uploads}</div>
+              <div className="text-4xl font-bold text-orange-600 dark:text-orange-400">{stats.uploads}</div>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">Awaiting review</p>
             </CardContent>
           </Card>
         </div>

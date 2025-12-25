@@ -241,9 +241,17 @@ export default function UploadPage() {
   return (
     <MainLayout>
       <div className="max-w-2xl mx-auto py-8 px-4">
-        <div className="flex items-center gap-2 mb-8">
-          <Upload className="h-6 w-6 text-blue-600" />
-          <h1 className="text-3xl font-bold">Upload Lesson</h1>
+        {/* Header */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-blue-100 dark:bg-blue-900 mb-4">
+            <Upload className="h-7 w-7 text-blue-600 dark:text-blue-400" />
+          </div>
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-3">
+            Upload Lesson
+          </h1>
+          <p className="text-lg text-gray-600 dark:text-gray-400">
+            Share your knowledge with the Faculty Hub community
+          </p>
         </div>
 
         <Card className="border-0 shadow-sm">
