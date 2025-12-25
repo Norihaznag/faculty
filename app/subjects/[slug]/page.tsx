@@ -36,9 +36,6 @@ export default async function SubjectPage({ params }: Props) {
           <h1 className="text-4xl font-bold mb-2 text-foreground">
             {subject.name}
           </h1>
-          {subject.description && (
-            <p className="text-xl text-muted-foreground">{subject.description}</p>
-          )}
         </div>
 
         <div className="space-y-4">
@@ -67,15 +64,10 @@ export default async function SubjectPage({ params }: Props) {
                         <CardTitle className="group-hover:text-primary transition-colors line-clamp-2">
                           {lesson.title}
                         </CardTitle>
-                        {lesson.is_premium && (
-                          <Badge variant="secondary" className="bg-amber-400 text-foreground">
-                            Premium
-                          </Badge>
-                        )}
+                        <Badge variant="secondary" className="shrink-0">
+                          {lesson.difficulty}
+                        </Badge>
                       </div>
-                      {lesson.semester && (
-                        <CardDescription>{lesson.semester}</CardDescription>
-                      )}
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">

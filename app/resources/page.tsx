@@ -27,6 +27,7 @@ type Lesson = {
   difficulty: string;
   subject?: { id: string; name: string };
   subjectId: string;
+  createdAt?: Date | string;
 };
 
 type Subject = {
