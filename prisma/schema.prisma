@@ -25,6 +25,7 @@ model User {
   sessions      Session[]
   bookmarks     Bookmark[]
   uploads       Upload[]
+  lessons       Lesson[]
 
   @@index([email])
   @@index([role])
@@ -68,6 +69,19 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+model University {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  city      String
+  lessons   Lesson[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@index([city])
+}
+
 model Subject {
   id        String   @id @default(cuid())
   name      String   @unique
@@ -95,6 +109,10 @@ model Lesson {
   tags        Tag[]
   subject     Subject     @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   subjectId   String
+  university  University  @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  universityId String
+  author      User?       @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  authorId    String?
   modules     Module[]
   resources   Resource[]
   bookmarks   Bookmark[]
@@ -103,6 +121,8 @@ model Lesson {
   updatedAt   DateTime    @updatedAt
 
   @@index([subjectId])
+  @@index([universityId])
+  @@index([authorId])
   @@index([slug])
   @@index([published])
   @@index([difficulty])

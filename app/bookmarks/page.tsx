@@ -4,11 +4,18 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { MainLayout } from '@/components/layout/main-layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth-context';
-import { supabase, Lesson } from '@/lib/supabase';
-import { Bookmark, BookOpen } from 'lucide-react';
+import { Bookmark } from 'lucide-react';
+import prisma from '@/lib/db';
+
+type Lesson = {
+  id: string;
+  title: string;
+  slug: string;
+  subject: { name: string } | null;
+  views: number;
+};
 
 export default function BookmarksPage() {
   const router = useRouter();
@@ -20,14 +27,12 @@ export default function BookmarksPage() {
     const fetchBookmarks = async () => {
       if (!user) return;
 
-      const { data } = await supabase
-        .from('bookmarks')
-        .select('lesson:lessons(*, subject:subjects(*))')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (data) {
-        setLessons(data.map((b: any) => b.lesson).filter(Boolean));
+      try {
+        const res = await fetch(`/api/bookmarks?userId=${user.id}`);
+        const data = await res.json();
+        setLessons(data);
+      } catch (err) {
+        console.error('Failed to fetch bookmarks');
       }
 
       setLoading(false);
@@ -39,22 +44,6 @@ export default function BookmarksPage() {
       fetchBookmarks();
     }
   }, [user, authLoading, router]);
-
-  const fetchBookmarks = async () => {
-    if (!user) return;
-
-    const { data } = await supabase
-      .from('bookmarks')
-      .select('lesson:lessons(*, subject:subjects(*))')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
-
-    if (data) {
-      setLessons(data.map((b: any) => b.lesson).filter(Boolean));
-    }
-
-    setLoading(false);
-  };
 
   if (authLoading || loading) {
     return (
@@ -68,51 +57,39 @@ export default function BookmarksPage() {
 
   return (
     <MainLayout>
-      <div className="container mx-auto px-4 py-8 space-y-6">
-        <div className="flex items-center gap-2">
-          <Bookmark className="h-6 w-6" />
-          <h1 className="text-3xl font-bold">My Bookmarks</h1>
+      <div className="max-w-4xl mx-auto py-8 px-4 space-y-6">
+        <div className="flex items-center gap-2 mb-8">
+          <Bookmark className="h-6 w-6 text-blue-600" />
+          <h1 className="text-3xl font-bold">Saved Lessons</h1>
         </div>
 
         {lessons.length === 0 ? (
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-center text-muted-foreground">
-                You haven&apos;t bookmarked any lessons yet.
+          <Card className="border-0 shadow-sm">
+            <CardContent className="pt-6 pb-6 text-center">
+              <p className="text-gray-600 dark:text-gray-400">
+                You haven&apos;t saved any lessons yet.
               </p>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="space-y-3">
             {lessons.map((lesson) => (
               <Link
                 key={lesson.id}
                 href={`/lessons/${lesson.slug}`}
-                className="group"
+                className="block"
               >
-                <Card className="h-full transition-all hover:shadow-lg">
-                  <CardHeader>
-                    <div className="flex items-start justify-between gap-2">
-                      <CardTitle className="group-hover:text-primary transition-colors line-clamp-2">
-                        {lesson.title}
-                      </CardTitle>
-                      {lesson.is_premium && (
-                        <Badge variant="secondary">Premium</Badge>
-                      )}
+                <Card className="border-0 shadow-sm hover:shadow-md transition-shadow overflow-hidden cursor-pointer">
+                  <div className="h-1 bg-blue-600" />
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base font-semibold line-clamp-2">
+                      {lesson.title}
+                    </CardTitle>
+                    <div className="flex items-center justify-between mt-2 text-xs text-gray-600 dark:text-gray-400">
+                      <span>{lesson.subject?.name}</span>
+                      <span>{lesson.views} views</span>
                     </div>
-                    <CardDescription>
-                      {lesson.subject?.name}
-                      {lesson.semester && ` • ${lesson.semester}`}
-                    </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <BookOpen className="h-4 w-4" />
-                        {lesson.views} views
-                      </span>
-                    </div>
-                  </CardContent>
                 </Card>
               </Link>
             ))}
