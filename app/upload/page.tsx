@@ -22,7 +22,7 @@ type ContentType = 'lesson' | 'pdf' | 'book' | 'module' | 'link';
 
 export default function UploadPage() {
   const router = useRouter();
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -97,7 +97,7 @@ export default function UploadPage() {
       .map((t) => t.trim())
       .filter(Boolean);
 
-    const isAdmin = profile?.role === 'admin';
+    const isAdmin = isAdmin;
     
     // If admin, publish directly as lesson. Otherwise, create upload for review.
     if (isAdmin) {
@@ -325,7 +325,7 @@ export default function UploadPage() {
                 <Alert>
                   <CheckCircle className="h-4 w-4" />
                   <AlertDescription>
-                    {profile?.role === 'admin' ? (
+                    {isAdmin ? (
                       <>Your lesson has been published successfully!</>
                     ) : (
                       <>

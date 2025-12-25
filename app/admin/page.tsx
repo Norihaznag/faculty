@@ -39,7 +39,7 @@ import { supabase as supabaseClient, Subject, Lesson } from '@/lib/supabase';
 
 export default function AdminPage() {
   const router = useRouter();
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const [uploads, setUploads] = useState<Upload[]>([]);
   const [selectedUpload, setSelectedUpload] = useState<Upload | null>(null);
   const [adminNotes, setAdminNotes] = useState('');
@@ -63,16 +63,14 @@ export default function AdminPage() {
   const [updatingRole, setUpdatingRole] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && (!user || (profile?.role !== 'admin' && profile?.role !== 'moderator'))) {
+    if (!authLoading && (!user || !isAdmin)) {
       router.push('/');
-    } else if (profile?.role === 'admin' || profile?.role === 'moderator') {
+    } else if (isAdmin) {
       fetchData();
       fetchSubjects();
-      if (profile?.role === 'admin') {
-        fetchUsers();
-      }
+      fetchUsers();
     }
-  }, [user, profile, authLoading, router]);
+  }, [user, isAdmin, authLoading, router]);
 
   const fetchData = async () => {
     try {
@@ -420,11 +418,9 @@ export default function AdminPage() {
     );
   }
 
-  if (profile?.role !== 'admin' && profile?.role !== 'moderator') {
+  if (!isAdmin) {
     return null;
   }
-
-  const isAdmin = profile?.role === 'admin';
 
   // Filter out admin's own uploads from pending (admins publish directly, so they shouldn't appear here)
   const pendingUploads = uploads.filter((u) => u.status === 'pending' && u.uploader_id !== user?.id);
