@@ -14,8 +14,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { supabase, Subject, Lesson } from '@/lib/supabase';
 import { BookOpen, Filter, X, Search as SearchIcon } from 'lucide-react';
+
+type Lesson = {
+  id: string;
+  title: string;
+  slug: string;
+  description?: string;
+  content?: string;
+  views: number;
+  published: boolean;
+  difficulty: string;
+  subject?: { id: string; name: string };
+  subjectId: string;
+};
+
+type Subject = {
+  id: string;
+  name: string;
+  slug: string;
+};
 
 export default function ResourcesPage() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
@@ -32,18 +50,19 @@ export default function ResourcesPage() {
   }, []);
 
   const fetchData = async () => {
-    const [lessonsRes, subjectsRes] = await Promise.all([
-      supabase
-        .from('lessons')
-        .select('*, subject:subjects(*)')
-        .eq('is_published', true)
-        .limit(500),
-      supabase.from('subjects').select('*').order('order_index'),
-    ]);
+    try {
+      const [lessonsRes, subjectsRes] = await Promise.all([
+        fetch('/api/lessons').then(r => r.json()),
+        fetch('/api/subjects').then(r => r.json()),
+      ]);
 
-    if (lessonsRes.data) setLessons(lessonsRes.data);
-    if (subjectsRes.data) setSubjects(subjectsRes.data);
-    setLoading(false);
+      setLessons(lessonsRes.lessons || []);
+      setSubjects(subjectsRes.subjects || []);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Filter & search
@@ -56,20 +75,20 @@ export default function ResourcesPage() {
       result = result.filter(
         (lesson) =>
           lesson.title.toLowerCase().includes(query) ||
-          lesson.content?.toLowerCase().includes(query)
+          lesson.description?.toLowerCase().includes(query)
       );
     }
 
     // Subject filter - only filter if not "all"
     if (selectedSubject && selectedSubject !== 'all') {
-      result = result.filter((lesson) => lesson.subject_id === selectedSubject);
+      result = result.filter((lesson) => lesson.subjectId === selectedSubject);
     }
 
     // Sort
     if (sortBy === 'views') {
       result.sort((a, b) => (b.views || 0) - (a.views || 0));
     } else if (sortBy === 'recent') {
-      result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      result.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
     }
 
     return result;
@@ -171,15 +190,14 @@ export default function ResourcesPage() {
                       <CardTitle className="text-base font-semibold group-hover:text-primary transition-colors line-clamp-2">
                         {lesson.title}
                       </CardTitle>
-                      {lesson.is_premium && (
+                      {lesson.difficulty === 'advanced' && (
                         <Badge variant="secondary" className="shrink-0 text-xs">
-                          Premium
+                          {lesson.difficulty}
                         </Badge>
                       )}
                     </div>
                     <CardDescription className="text-xs sm:text-sm line-clamp-1">
-                      {lesson.subject?.name}
-                      {lesson.semester && ` • ${lesson.semester}`}
+                      {lesson.subject?.name || 'No subject'}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="pt-0">

@@ -1,19 +1,22 @@
 import { MainLayout } from '@/components/layout/main-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { supabase, Subject } from '@/lib/supabase';
 import { BookOpen, Upload, Search as SearchIcon } from 'lucide-react';
 import Link from 'next/link';
+import prisma from '@/lib/db';
 
 export default async function Home() {
-  // Fetch data on the server
-  const [lessonsRes, subjectsRes] = await Promise.all([
-    supabase.from('lessons').select('id', { count: 'exact' }).eq('is_published', true),
-    supabase.from('subjects').select('*').order('order_index'),
+  // Fetch data on the server using Prisma
+  const [lessons, subjects] = await Promise.all([
+    prisma.lesson.findMany({
+      where: { published: true },
+    }),
+    prisma.subject.findMany({
+      orderBy: { name: 'asc' },
+    }),
   ]);
 
-  const lessonsCount = lessonsRes.count || 0;
-  const subjects = (subjectsRes.data as Subject[]) || [];
+  const lessonsCount = lessons.length;
 
   return (
     <MainLayout>

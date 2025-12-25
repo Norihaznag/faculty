@@ -1,69 +1,33 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { MainLayout } from '@/components/layout/main-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { supabase, Subject, Lesson } from '@/lib/supabase';
 import { BookOpen, TrendingUp } from 'lucide-react';
+import prisma from '@/lib/db';
 
-export default function SubjectPage() {
-  const params = useParams();
-  const slug = params.slug as string;
-  const [subject, setSubject] = useState<Subject | null>(null);
-  const [lessons, setLessons] = useState<Lesson[]>([]);
-  const [loading, setLoading] = useState(true);
+type Props = {
+  params: { slug: string };
+};
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const { data: subjectData } = await supabase
-        .from('subjects')
-        .select('*')
-        .eq('slug', slug)
-        .maybeSingle();
+export default async function SubjectPage({ params }: Props) {
+  const { slug } = params;
 
-      if (subjectData) {
-        setSubject(subjectData);
-
-        const { data: lessonsData } = await supabase
-          .from('lessons')
-          .select('*')
-          .eq('subject_id', subjectData.id)
-          .eq('is_published', true)
-          .order('created_at', { ascending: false });
-
-        if (lessonsData) {
-          setLessons(lessonsData);
-        }
-      }
-
-      setLoading(false);
-    };
-    
-    fetchData();
-  }, [slug]);
-
-  if (loading) {
-    return (
-      <MainLayout>
-        <div className="container mx-auto px-4 py-8">
-          <p>Loading...</p>
-        </div>
-      </MainLayout>
-    );
-  }
+  const subject = await prisma.subject.findUnique({
+    where: { slug },
+    include: {
+      lessons: {
+        where: { published: true },
+        orderBy: { createdAt: 'desc' },
+      },
+    },
+  });
 
   if (!subject) {
-    return (
-      <MainLayout>
-        <div className="container mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold">Faculty Not Found</h1>
-        </div>
-      </MainLayout>
-    );
+    notFound();
   }
+
+  const lessons = subject.lessons;
 
   return (
     <MainLayout>
