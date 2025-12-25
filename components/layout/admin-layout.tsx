@@ -21,7 +21,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   ];
 
   const handleSignOut = async () => {
-    await signOut({ redirect: true, callbackUrl: '/' });
+    try {
+      await signOut({ callbackUrl: '/' });
+    } catch (error) {
+      console.error('Sign out error:', error);
+      // Fallback: redirect to home
+      window.location.href = '/';
+    }
   };
 
   return (
