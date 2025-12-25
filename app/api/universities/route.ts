@@ -52,6 +52,11 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const universities = await prisma.university.findMany({
+      include: {
+        _count: {
+          select: { faculties: true, lessons: true },
+        },
+      },
       orderBy: { name: 'asc' },
     });
 

@@ -208,6 +208,7 @@ async function seed() {
               slug: subject.slug,
               color: subject.color,
               icon: subject.icon,
+              semesterId: undefined, // Will be linked to semesters once programs are created
             },
           });
           console.log(`   ✓ Created: ${createdSubject.name}`);

@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Compass, Bookmark, Upload, LogIn, ChevronDown, BookOpen } from 'lucide-react';
+import { Home, Compass, Bookmark, Upload, LogIn, ChevronDown, BookOpen, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -28,7 +28,8 @@ export function Sidebar({ isOpen, onClose, isMobile = false }: SidebarProps) {
 
   const mainNavItems = [
     { href: '/', label: 'Home', icon: Home },
-    { href: '/resources', label: 'Browse All', icon: BookOpen },
+    { href: '/explore', label: 'Explore Universities', icon: Building2 },
+    { href: '/resources', label: 'Browse Lessons', icon: BookOpen },
   ];
 
   const userNavItems = user

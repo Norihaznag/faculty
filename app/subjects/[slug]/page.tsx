@@ -13,8 +13,8 @@ type Props = {
 export default async function SubjectPage({ params }: Props) {
   const { slug } = params;
 
-  const subject = await prisma.subject.findUnique({
-    where: { slug },
+  const subject = await prisma.subject.findFirst({
+    where: { slug, semesterId: null }, // Find subject by slug without semester
     include: {
       lessons: {
         where: { published: true },

@@ -70,29 +70,79 @@ model VerificationToken {
 }
 
 model University {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  slug      String   @unique
+  id        String     @id @default(cuid())
+  name      String     @unique
+  slug      String     @unique
   city      String
+  faculties Faculty[]
   lessons   Lesson[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
   @@index([slug])
   @@index([city])
 }
 
-model Subject {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  slug      String   @unique
-  color     String   @default("#3B82F6")
-  icon      String?
-  lessons   Lesson[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Faculty {
+  id           String    @id @default(cuid())
+  name         String    // e.g., "Faculty of Science"
+  slug         String
+  university   University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  universityId String
+  programs     Program[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
+  @@unique([universityId, slug])
+  @@index([universityId])
   @@index([slug])
+}
+
+model Program {
+  id        String    @id @default(cuid())
+  name      String    // e.g., "English Studies", "Computer Science"
+  slug      String
+  faculty   Faculty   @relation(fields: [facultyId], references: [id], onDelete: Cascade)
+  facultyId String
+  semesters Semester[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([facultyId, slug])
+  @@index([facultyId])
+  @@index([slug])
+}
+
+model Semester {
+  id        String    @id @default(cuid())
+  name      String    // e.g., "S1", "S2", "Semester 1"
+  order     Int       // 1, 2, 3, etc.
+  program   Program   @relation(fields: [programId], references: [id], onDelete: Cascade)
+  programId String
+  subjects  Subject[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([programId, order])
+  @@index([programId])
+}
+
+model Subject {
+  id         String     @id @default(cuid())
+  name       String
+  slug       String
+  semester   Semester?  @relation(fields: [semesterId], references: [id], onDelete: SetNull)
+  semesterId String?
+  color      String     @default("#3B82F6")
+  icon       String?
+  lessons    Lesson[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@unique([semesterId, slug])
+  @@index([semesterId])
+  @@index([slug])
+  @@index([name])
 }
 
 model Lesson {
