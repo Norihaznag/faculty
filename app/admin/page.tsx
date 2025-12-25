@@ -6,9 +6,34 @@ import { MainLayout } from '@/components/layout/main-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/lib/auth-context';
-import { Shield, Users, BookOpen, BarChart3, CheckCircle, Clock } from 'lucide-react';
+import {
+  Shield,
+  Users,
+  BookOpen,
+  BarChart3,
+  CheckCircle,
+  Clock,
+  Trash2,
+  Edit2,
+  Plus,
+  Search,
+  AlertCircle,
+  CheckIcon,
+  XIcon,
+} from 'lucide-react';
 
 type Stats = {
   users: number;
@@ -17,60 +42,326 @@ type Stats = {
   uploads: number;
 };
 
+type User = {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  createdAt: string;
+  image?: string;
+  _count: { uploads: number; bookmarks: number };
+};
+
 type Lesson = {
   id: string;
   title: string;
   slug: string;
+  description?: string;
   published: boolean;
   difficulty: string;
   views: number;
-  subject?: { name: string };
+  subject?: { id: string; name: string };
+  author?: { id: string; name: string; email: string };
+};
+
+type Upload = {
+  id: string;
+  title: string;
+  description?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+  user: { id: string; name: string; email: string };
+  lesson?: { subject?: { id: string; name: string } };
+  reason?: string;
 };
 
 export default function AdminPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const [stats, setStats] = useState<Stats>({ users: 0, lessons: 0, subjects: 0, uploads: 0 });
-  const [lessons, setLessons] = useState<Lesson[]>([]);
-  const [loadingStats, setLoadingStats] = useState(true);
-  const [loadingLessons, setLoadingLessons] = useState(true);
 
-  // Check authorization
+  // Check if user is admin
+  const isAdmin = user && (user as any).role === 'admin';
+
+  const [stats, setStats] = useState<Stats>({ users: 0, lessons: 0, subjects: 0, uploads: 0 });
+
+  // User Management State
+  const [users, setUsers] = useState<User[]>([]);
+  const [moderators, setModerators] = useState<User[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [searchUser, setSearchUser] = useState('');
+  const [filterRole, setFilterRole] = useState('');
+
+  // Lesson Management State
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [loadingLessons, setLoadingLessons] = useState(true);
+  const [searchLesson, setSearchLesson] = useState('');
+  const [filterPublished, setFilterPublished] = useState('');
+
+  // Upload Moderation State
+  const [uploads, setUploads] = useState<Upload[]>([]);
+  const [loadingUploads, setLoadingUploads] = useState(true);
+  const [uploadFilter, setUploadFilter] = useState('pending');
+
+  // Forms
+  const [showNewUserForm, setShowNewUserForm] = useState(false);
+  const [newUserForm, setNewUserForm] = useState({ email: '', name: '', role: 'student' });
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+
+  const [newModeratorForm, setNewModeratorForm] = useState({ email: '', name: '' });
+  const [showNewModeratorForm, setShowNewModeratorForm] = useState(false);
+
+  const [showModerationForm, setShowModerationForm] = useState(false);
+  const [selectedUpload, setSelectedUpload] = useState<Upload | null>(null);
+  const [moderationReason, setModerationReason] = useState('');
+
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  // Authorization check
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!authLoading && !isAdmin) {
       router.push('/');
     }
-  }, [user, authLoading, router]);
+  }, [isAdmin, authLoading, router]);
 
-  // Fetch admin stats
+  // Fetch stats
   useEffect(() => {
-    if (user) {
+    if (isAdmin) {
       fetchStats();
+      fetchUsers();
       fetchLessons();
+      fetchModerators();
+      fetchUploads();
     }
-  }, [user]);
+  }, [isAdmin]);
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('/api/admin/stats');
-      const data = await response.json();
+      const res = await fetch('/api/admin/stats');
+      const data = await res.json();
       setStats(data.stats || { users: 0, lessons: 0, subjects: 0, uploads: 0 });
-    } catch (error) {
-      console.error('Error fetching stats:', error);
+    } catch (err) {
+      console.error('Failed to fetch stats:', err);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      setLoadingUsers(true);
+      const res = await fetch(`/api/admin/users?search=${searchUser}&role=${filterRole}`);
+      const data = await res.json();
+      setUsers(data.users || []);
+    } catch (err) {
+      setError('Failed to fetch users');
     } finally {
-      setLoadingStats(false);
+      setLoadingUsers(false);
+    }
+  };
+
+  const fetchModerators = async () => {
+    try {
+      const res = await fetch('/api/admin/moderators');
+      const data = await res.json();
+      setModerators(data.moderators || []);
+    } catch (err) {
+      console.error('Failed to fetch moderators:', err);
     }
   };
 
   const fetchLessons = async () => {
     try {
-      const response = await fetch('/api/lessons');
-      const data = await response.json();
-      setLessons(data.lessons?.slice(0, 10) || []);
-    } catch (error) {
-      console.error('Error fetching lessons:', error);
+      setLoadingLessons(true);
+      const url = new URL('/api/admin/lessons', window.location.origin);
+      if (searchLesson) url.searchParams.set('search', searchLesson);
+      if (filterPublished) url.searchParams.set('published', filterPublished);
+
+      const res = await fetch(url);
+      const data = await res.json();
+      setLessons(data.lessons || []);
+    } catch (err) {
+      setError('Failed to fetch lessons');
     } finally {
       setLoadingLessons(false);
+    }
+  };
+
+  const fetchUploads = async () => {
+    try {
+      setLoadingUploads(true);
+      const res = await fetch(`/api/admin/uploads?status=${uploadFilter}`);
+      const data = await res.json();
+      setUploads(data.uploads || []);
+    } catch (err) {
+      setError('Failed to fetch uploads');
+    } finally {
+      setLoadingUploads(false);
+    }
+  };
+
+  // USER CRUD OPERATIONS
+  const handleCreateUser = async () => {
+    try {
+      setError('');
+      if (!newUserForm.email || !newUserForm.name) {
+        setError('Email and name required');
+        return;
+      }
+
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newUserForm),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to create user');
+      }
+
+      setSuccess('User created successfully');
+      setNewUserForm({ email: '', name: '', role: 'student' });
+      setShowNewUserForm(false);
+      fetchUsers();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleUpdateUser = async () => {
+    try {
+      setError('');
+      if (!editingUser) return;
+
+      const res = await fetch(`/api/admin/users/${editingUser.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editingUser),
+      });
+
+      if (!res.ok) throw new Error('Failed to update user');
+
+      setSuccess('User updated successfully');
+      setEditingUser(null);
+      fetchUsers();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      if (!confirm('Delete this user? This cannot be undone.')) return;
+
+      setError('');
+      const res = await fetch(`/api/admin/users/${userId}`, { method: 'DELETE' });
+
+      if (!res.ok) throw new Error('Failed to delete user');
+
+      setSuccess('User deleted successfully');
+      fetchUsers();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  // MODERATOR OPERATIONS
+  const handleCreateModerator = async () => {
+    try {
+      setError('');
+      if (!newModeratorForm.email || !newModeratorForm.name) {
+        setError('Email and name required');
+        return;
+      }
+
+      const res = await fetch('/api/admin/moderators', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newModeratorForm),
+      });
+
+      if (!res.ok) throw new Error('Failed to create moderator');
+
+      setSuccess('Moderator added successfully');
+      setNewModeratorForm({ email: '', name: '' });
+      setShowNewModeratorForm(false);
+      fetchModerators();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleRemoveModerator = async (id: string) => {
+    try {
+      if (!confirm('Remove moderator role from this user?')) return;
+
+      setError('');
+      const res = await fetch(`/api/admin/moderators/${id}`, { method: 'DELETE' });
+
+      if (!res.ok) throw new Error('Failed to remove moderator');
+
+      setSuccess('Moderator role removed');
+      fetchModerators();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  // LESSON OPERATIONS
+  const handleDeleteLesson = async (lessonId: string) => {
+    try {
+      if (!confirm('Delete this lesson? This cannot be undone.')) return;
+
+      setError('');
+      const res = await fetch(`/api/admin/lessons/${lessonId}`, { method: 'DELETE' });
+
+      if (!res.ok) throw new Error('Failed to delete lesson');
+
+      setSuccess('Lesson deleted successfully');
+      fetchLessons();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handlePublishLesson = async (lessonId: string, published: boolean) => {
+    try {
+      setError('');
+      const res = await fetch(`/api/admin/lessons/${lessonId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ published: !published }),
+      });
+
+      if (!res.ok) throw new Error('Failed to update lesson');
+
+      setSuccess(published ? 'Lesson unpublished' : 'Lesson published');
+      fetchLessons();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  // UPLOAD MODERATION
+  const handleModerateUpload = async (status: 'approved' | 'rejected') => {
+    try {
+      setError('');
+      if (!selectedUpload) return;
+
+      const res = await fetch(`/api/admin/uploads/${selectedUpload.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, reason: moderationReason }),
+      });
+
+      if (!res.ok) throw new Error('Failed to moderate upload');
+
+      setSuccess(`Upload ${status}` + (moderationReason ? ' with reason' : ''));
+      setShowModerationForm(false);
+      setSelectedUpload(null);
+      setModerationReason('');
+      fetchUploads();
+    } catch (err: any) {
+      setError(err.message);
     }
   };
 
@@ -82,13 +373,13 @@ export default function AdminPage() {
     );
   }
 
-  if (!user) {
+  if (!isAdmin) {
     return null;
   }
 
   return (
     <MainLayout>
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-7xl mx-auto space-y-8 pb-8">
         {/* Header */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-blue-100 dark:bg-blue-900 mb-4">
@@ -98,123 +389,330 @@ export default function AdminPage() {
             Admin Dashboard
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Manage your Faculty Hub platform and monitor activity
+            Manage users, moderators, content, and uploads
           </p>
         </div>
 
-        {/* Stats Grid */}
+        {/* Alerts */}
+        {error && (
+          <Alert className="border-red-500 bg-red-50 dark:bg-red-900/20">
+            <AlertCircle className="h-4 w-4 text-red-600" />
+            <AlertDescription className="text-red-600 dark:text-red-400">{error}</AlertDescription>
+          </Alert>
+        )}
+        {success && (
+          <Alert className="border-green-500 bg-green-50 dark:bg-green-900/20">
+            <CheckIcon className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-600 dark:text-green-400">{success}</AlertDescription>
+          </Alert>
+        )}
+
+        {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 border-0 shadow-sm hover:shadow-md transition-shadow">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 border-0 shadow-sm">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Total Users
-                </CardTitle>
+                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
                 <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
             </CardHeader>
             <CardContent>
               <div className="text-4xl font-bold text-blue-600 dark:text-blue-400">{stats.users}</div>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">Active contributors</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900 dark:to-green-800 border-0 shadow-sm hover:shadow-md transition-shadow">
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900 dark:to-green-800 border-0 shadow-sm">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Total Lessons
-                </CardTitle>
+                <CardTitle className="text-sm font-medium">Total Lessons</CardTitle>
                 <BookOpen className="h-5 w-5 text-green-600 dark:text-green-400" />
               </div>
             </CardHeader>
             <CardContent>
               <div className="text-4xl font-bold text-green-600 dark:text-green-400">{stats.lessons}</div>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">Published content</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900 dark:to-purple-800 border-0 shadow-sm hover:shadow-md transition-shadow">
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900 dark:to-purple-800 border-0 shadow-sm">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Subjects
-                </CardTitle>
+                <CardTitle className="text-sm font-medium">Subjects</CardTitle>
                 <BookOpen className="h-5 w-5 text-purple-600 dark:text-purple-400" />
               </div>
             </CardHeader>
             <CardContent>
               <div className="text-4xl font-bold text-purple-600 dark:text-purple-400">{stats.subjects}</div>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">Organized topics</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900 dark:to-orange-800 border-0 shadow-sm hover:shadow-md transition-shadow">
+          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900 dark:to-orange-800 border-0 shadow-sm">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Pending
-                </CardTitle>
+                <CardTitle className="text-sm font-medium">Pending</CardTitle>
                 <BarChart3 className="h-5 w-5 text-orange-600 dark:text-orange-400" />
               </div>
             </CardHeader>
             <CardContent>
               <div className="text-4xl font-bold text-orange-600 dark:text-orange-400">{stats.uploads}</div>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">Awaiting review</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Tabs */}
-        <Tabs defaultValue="lessons" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:w-auto">
-            <TabsTrigger value="lessons">Recent Lessons</TabsTrigger>
-            <TabsTrigger value="content">Manage Content</TabsTrigger>
+        {/* Main Tabs */}
+        <Tabs defaultValue="uploads" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-1 md:grid-cols-4 gap-2">
+            <TabsTrigger value="uploads">Content Moderation</TabsTrigger>
+            <TabsTrigger value="lessons">Lessons</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="moderators">Moderators</TabsTrigger>
           </TabsList>
 
-          {/* Recent Lessons Tab */}
+          {/* UPLOADS MODERATION TAB */}
+          <TabsContent value="uploads" className="space-y-4">
+            <Card className="border-0 shadow-sm">
+              <CardHeader>
+                <CardTitle>Upload Moderation</CardTitle>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                  Review and approve/reject pending uploads
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Filter */}
+                <div className="flex gap-2">
+                  <Button
+                    variant={uploadFilter === 'pending' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      setUploadFilter('pending');
+                      fetchUploads();
+                    }}
+                  >
+                    Pending
+                  </Button>
+                  <Button
+                    variant={uploadFilter === 'approved' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      setUploadFilter('approved');
+                      fetchUploads();
+                    }}
+                  >
+                    Approved
+                  </Button>
+                  <Button
+                    variant={uploadFilter === 'rejected' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      setUploadFilter('rejected');
+                      fetchUploads();
+                    }}
+                  >
+                    Rejected
+                  </Button>
+                </div>
+
+                {loadingUploads ? (
+                  <p>Loading...</p>
+                ) : uploads.length === 0 ? (
+                  <p className="text-gray-600 dark:text-gray-400">No uploads found</p>
+                ) : (
+                  <div className="space-y-3">
+                    {uploads.map((upload) => (
+                      <div key={upload.id} className="p-4 bg-gray-50 dark:bg-slate-800/50 rounded-lg">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <h4 className="font-semibold">{upload.title}</h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">{upload.description}</p>
+                            <div className="flex items-center gap-3 mt-2 text-xs text-gray-600 dark:text-gray-400">
+                              <span>{upload.user.name}</span>
+                              <span>•</span>
+                              <span>{upload.lesson?.subject?.name || 'No subject'}</span>
+                            </div>
+                          </div>
+                          <Badge
+                            className={
+                              upload.status === 'pending'
+                                ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
+                                : upload.status === 'approved'
+                                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                                  : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                            }
+                          >
+                            {upload.status}
+                          </Badge>
+                        </div>
+
+                        {upload.status === 'pending' && (
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="default"
+                              onClick={() => {
+                                setSelectedUpload(upload);
+                                setShowModerationForm(true);
+                              }}
+                            >
+                              <CheckIcon className="h-4 w-4 mr-1" />
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => {
+                                setSelectedUpload(upload);
+                                setShowModerationForm(true);
+                              }}
+                            >
+                              <XIcon className="h-4 w-4 mr-1" />
+                              Reject
+                            </Button>
+                          </div>
+                        )}
+
+                        {upload.reason && (
+                          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                            <strong>Reason:</strong> {upload.reason}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Moderation Form Modal */}
+            {showModerationForm && selectedUpload && (
+              <Card className="border-2 border-blue-500 bg-blue-50 dark:bg-blue-900/20">
+                <CardHeader>
+                  <CardTitle>Moderate Upload: {selectedUpload.title}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label>Reason (optional)</Label>
+                    <Textarea
+                      placeholder="Provide feedback or reason for rejection..."
+                      value={moderationReason}
+                      onChange={(e) => setModerationReason(e.target.value)}
+                      className="mt-2"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      className="flex-1"
+                      onClick={() => handleModerateUpload('approved')}
+                    >
+                      <CheckIcon className="h-4 w-4 mr-2" />
+                      Approve
+                    </Button>
+                    <Button
+                      className="flex-1"
+                      variant="destructive"
+                      onClick={() => handleModerateUpload('rejected')}
+                    >
+                      <XIcon className="h-4 w-4 mr-2" />
+                      Reject
+                    </Button>
+                    <Button
+                      className="flex-1"
+                      variant="outline"
+                      onClick={() => {
+                        setShowModerationForm(false);
+                        setSelectedUpload(null);
+                        setModerationReason('');
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* LESSONS TAB */}
           <TabsContent value="lessons" className="space-y-4">
             <Card className="border-0 shadow-sm">
               <CardHeader>
-                <CardTitle>Recent Lessons</CardTitle>
+                <CardTitle>Manage Lessons</CardTitle>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                  Edit, publish, or delete lessons
+                </p>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
+                {/* Search and Filter */}
+                <div className="flex flex-col md:flex-row gap-2">
+                  <div className="flex-1 relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Search lessons..."
+                      value={searchLesson}
+                      onChange={(e) => setSearchLesson(e.target.value)}
+                      onBlur={fetchLessons}
+                      className="pl-10"
+                    />
+                  </div>
+                  <Select value={filterPublished} onValueChange={(v) => setFilterPublished(v)}>
+                    <SelectTrigger className="md:w-40">
+                      <SelectValue placeholder="Filter by status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All</SelectItem>
+                      <SelectItem value="true">Published</SelectItem>
+                      <SelectItem value="false">Draft</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button onClick={fetchLessons}>Filter</Button>
+                </div>
+
                 {loadingLessons ? (
-                  <p className="text-gray-600">Loading...</p>
+                  <p>Loading...</p>
                 ) : lessons.length === 0 ? (
-                  <p className="text-gray-600">No lessons found</p>
+                  <p className="text-gray-600 dark:text-gray-400">No lessons found</p>
                 ) : (
                   <div className="space-y-3">
                     {lessons.map((lesson) => (
-                      <div
-                        key={lesson.id}
-                        className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800/50 rounded-lg"
-                      >
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-sm mb-1">{lesson.title}</h4>
-                          <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-                            <span>{lesson.subject?.name || 'No subject'}</span>
-                            <span>•</span>
-                            <span>{lesson.views} views</span>
-                            <span>•</span>
-                            <Badge className="text-xs capitalize">
-                              {lesson.difficulty}
+                      <div key={lesson.id} className="p-4 bg-gray-50 dark:bg-slate-800/50 rounded-lg">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1">
+                            <h4 className="font-semibold">{lesson.title}</h4>
+                            <div className="flex items-center gap-2 mt-2 text-xs text-gray-600 dark:text-gray-400">
+                              <span>{lesson.subject?.name || 'No subject'}</span>
+                              <span>•</span>
+                              <span>{lesson.views} views</span>
+                              <span>•</span>
+                              <Badge className="text-xs capitalize">{lesson.difficulty}</Badge>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Badge
+                              className={
+                                lesson.published
+                                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                                  : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
+                              }
+                            >
+                              {lesson.published ? 'Published' : 'Draft'}
                             </Badge>
                           </div>
                         </div>
-                        <div>
-                          {lesson.published ? (
-                            <Badge className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Published
-                            </Badge>
-                          ) : (
-                            <Badge className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400">
-                              <Clock className="h-3 w-3 mr-1" />
-                              Draft
-                            </Badge>
-                          )}
+
+                        <div className="flex gap-2 mt-3">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handlePublishLesson(lesson.id, lesson.published)}
+                          >
+                            {lesson.published ? 'Unpublish' : 'Publish'}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDeleteLesson(lesson.id)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Delete
+                          </Button>
                         </div>
                       </div>
                     ))}
@@ -224,99 +722,323 @@ export default function AdminPage() {
             </Card>
           </TabsContent>
 
-          {/* Manage Content Tab */}
-          <TabsContent value="content" className="space-y-4">
+          {/* USERS TAB */}
+          <TabsContent value="users" className="space-y-4">
             <Card className="border-0 shadow-sm">
               <CardHeader>
-                <CardTitle>Manage Content</CardTitle>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                  Add, edit, or delete lessons and subjects
-                </p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>User Management</CardTitle>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                      Create, edit, and delete users
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => setShowNewUserForm(!showNewUserForm)}
+                    className="gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    New User
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <Button variant="outline" className="w-full" disabled>
-                    <BookOpen className="h-4 w-4 mr-2" />
-                    Create New Lesson
-                  </Button>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
-                    Coming soon - Use the /upload page for now
-                  </p>
+                {/* New User Form */}
+                {showNewUserForm && (
+                  <Card className="border-2 border-blue-500 bg-blue-50 dark:bg-blue-900/20">
+                    <CardContent className="pt-6 space-y-4">
+                      <div>
+                        <Label>Email</Label>
+                        <Input
+                          type="email"
+                          placeholder="user@example.com"
+                          value={newUserForm.email}
+                          onChange={(e) =>
+                            setNewUserForm({ ...newUserForm, email: e.target.value })
+                          }
+                          className="mt-2"
+                        />
+                      </div>
+                      <div>
+                        <Label>Name</Label>
+                        <Input
+                          placeholder="Full Name"
+                          value={newUserForm.name}
+                          onChange={(e) =>
+                            setNewUserForm({ ...newUserForm, name: e.target.value })
+                          }
+                          className="mt-2"
+                        />
+                      </div>
+                      <div>
+                        <Label>Role</Label>
+                        <Select
+                          value={newUserForm.role}
+                          onValueChange={(value) =>
+                            setNewUserForm({ ...newUserForm, role: value })
+                          }
+                        >
+                          <SelectTrigger className="mt-2">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="student">Student</SelectItem>
+                            <SelectItem value="teacher">Teacher</SelectItem>
+                            <SelectItem value="moderator">Moderator</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button className="flex-1" onClick={handleCreateUser}>
+                          Create User
+                        </Button>
+                        <Button
+                          className="flex-1"
+                          variant="outline"
+                          onClick={() => setShowNewUserForm(false)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Search and Filter */}
+                <div className="flex flex-col md:flex-row gap-2">
+                  <div className="flex-1 relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Search by name or email..."
+                      value={searchUser}
+                      onChange={(e) => setSearchUser(e.target.value)}
+                      onBlur={fetchUsers}
+                      className="pl-10"
+                    />
+                  </div>
+                  <Select value={filterRole} onValueChange={(v) => setFilterRole(v)}>
+                    <SelectTrigger className="md:w-40">
+                      <SelectValue placeholder="Filter by role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All Roles</SelectItem>
+                      <SelectItem value="student">Student</SelectItem>
+                      <SelectItem value="teacher">Teacher</SelectItem>
+                      <SelectItem value="moderator">Moderator</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button onClick={fetchUsers}>Filter</Button>
                 </div>
-                <div>
-                  <Button variant="outline" className="w-full" disabled>
-                    <BookOpen className="h-4 w-4 mr-2" />
-                    Manage Subjects
-                  </Button>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
-                    Coming soon
-                  </p>
-                </div>
+
+                {/* Edit User Form */}
+                {editingUser && (
+                  <Card className="border-2 border-purple-500 bg-purple-50 dark:bg-purple-900/20">
+                    <CardHeader>
+                      <CardTitle>Edit User: {editingUser.name}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <Label>Name</Label>
+                        <Input
+                          value={editingUser.name}
+                          onChange={(e) =>
+                            setEditingUser({ ...editingUser, name: e.target.value })
+                          }
+                          className="mt-2"
+                        />
+                      </div>
+                      <div>
+                        <Label>Role</Label>
+                        <Select
+                          value={editingUser.role}
+                          onValueChange={(value) =>
+                            setEditingUser({ ...editingUser, role: value })
+                          }
+                        >
+                          <SelectTrigger className="mt-2">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="student">Student</SelectItem>
+                            <SelectItem value="teacher">Teacher</SelectItem>
+                            <SelectItem value="moderator">Moderator</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button className="flex-1" onClick={handleUpdateUser}>
+                          Save Changes
+                        </Button>
+                        <Button
+                          className="flex-1"
+                          variant="outline"
+                          onClick={() => setEditingUser(null)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Users List */}
+                {loadingUsers ? (
+                  <p>Loading...</p>
+                ) : users.length === 0 ? (
+                  <p className="text-gray-600 dark:text-gray-400">No users found</p>
+                ) : (
+                  <div className="space-y-3">
+                    {users.map((u) => (
+                      <div key={u.id} className="p-4 bg-gray-50 dark:bg-slate-800/50 rounded-lg">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1">
+                            <h4 className="font-semibold">{u.name}</h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">{u.email}</p>
+                            <div className="flex items-center gap-2 mt-2 text-xs text-gray-600 dark:text-gray-400">
+                              <Badge variant="outline" className="capitalize">
+                                {u.role}
+                              </Badge>
+                              <span>{u._count.uploads} uploads</span>
+                              <span>•</span>
+                              <span>{u._count.bookmarks} bookmarks</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2 mt-3">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setEditingUser(u)}
+                          >
+                            <Edit2 className="h-4 w-4 mr-1" />
+                            Edit
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDeleteUser(u.id)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* Users Tab */}
-          <TabsContent value="users" className="space-y-4">
+          {/* MODERATORS TAB */}
+          <TabsContent value="moderators" className="space-y-4">
             <Card className="border-0 shadow-sm">
               <CardHeader>
-                <CardTitle>User Management</CardTitle>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                  Manage user roles and permissions
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <p className="text-gray-600 dark:text-gray-400">
-                    User management features coming soon
-                  </p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Moderator Management</CardTitle>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                      Add and remove moderators
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => setShowNewModeratorForm(!showNewModeratorForm)}
+                    className="gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Moderator
+                  </Button>
                 </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* New Moderator Form */}
+                {showNewModeratorForm && (
+                  <Card className="border-2 border-blue-500 bg-blue-50 dark:bg-blue-900/20">
+                    <CardContent className="pt-6 space-y-4">
+                      <div>
+                        <Label>Email</Label>
+                        <Input
+                          type="email"
+                          placeholder="moderator@example.com"
+                          value={newModeratorForm.email}
+                          onChange={(e) =>
+                            setNewModeratorForm({
+                              ...newModeratorForm,
+                              email: e.target.value,
+                            })
+                          }
+                          className="mt-2"
+                        />
+                      </div>
+                      <div>
+                        <Label>Name</Label>
+                        <Input
+                          placeholder="Moderator Name"
+                          value={newModeratorForm.name}
+                          onChange={(e) =>
+                            setNewModeratorForm({
+                              ...newModeratorForm,
+                              name: e.target.value,
+                            })
+                          }
+                          className="mt-2"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button className="flex-1" onClick={handleCreateModerator}>
+                          Add Moderator
+                        </Button>
+                        <Button
+                          className="flex-1"
+                          variant="outline"
+                          onClick={() => setShowNewModeratorForm(false)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Moderators List */}
+                {moderators.length === 0 ? (
+                  <p className="text-gray-600 dark:text-gray-400">No moderators yet</p>
+                ) : (
+                  <div className="space-y-3">
+                    {moderators.map((mod) => (
+                      <div key={mod.id} className="p-4 bg-gray-50 dark:bg-slate-800/50 rounded-lg">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1">
+                            <h4 className="font-semibold">{mod.name}</h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">{mod.email}</p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                              Joined{' '}
+                              {new Date(mod.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-3">
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleRemoveModerator(mod.id)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Remove Role
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
-
-        {/* Info Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="border-0 shadow-sm bg-blue-50 dark:bg-slate-900/50">
-            <CardHeader>
-              <CardTitle className="text-base">Platform Info</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm space-y-2">
-              <p>
-                <span className="font-medium">Database:</span> Neon PostgreSQL + Prisma
-              </p>
-              <p>
-                <span className="font-medium">Authentication:</span> NextAuth.js
-              </p>
-              <p>
-                <span className="font-medium">Status:</span> Production Ready
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-sm bg-green-50 dark:bg-slate-900/50">
-            <CardHeader>
-              <CardTitle className="text-base">Quick Links</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm space-y-2">
-              <Button
-                variant="link"
-                className="h-auto p-0 text-sm"
-                onClick={() => router.push('/resources')}
-              >
-                → Browse All Lessons
-              </Button>
-              <Button
-                variant="link"
-                className="h-auto p-0 text-sm block"
-                onClick={() => router.push('/upload')}
-              >
-                → Upload New Lesson
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </MainLayout>
   );
