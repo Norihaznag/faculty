@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +22,15 @@ export default function SignUpPage() {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Password strength validation
+  const validatePasswordStrength = (pwd: string) => {
+    const hasUpperCase = /[A-Z]/.test(pwd);
+    const hasLowerCase = /[a-z]/.test(pwd);
+    const hasNumber = /[0-9]/.test(pwd);
+    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd);
+    return hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -33,14 +43,21 @@ export default function SignUpPage() {
       return;
     }
 
-    if (!email.includes('@')) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.toLowerCase())) {
       setError('Please enter a valid email address');
       setLoading(false);
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long');
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters long');
+      setLoading(false);
+      return;
+    }
+
+    if (!validatePasswordStrength(password)) {
+      setError('Password must contain uppercase, lowercase, number, and special character');
       setLoading(false);
       return;
     }
@@ -60,6 +77,12 @@ export default function SignUpPage() {
       });
 
       if (response.status === 201) {
+        // Auto-sign in after signup
+        await signIn('credentials', {
+          email,
+          password,
+          redirect: false,
+        });
         setSuccess(true);
       } else if (response.status === 409) {
         setError('This email is already registered. Please sign in instead.');
@@ -83,12 +106,12 @@ export default function SignUpPage() {
           <CardHeader>
             <CardTitle>Account created successfully!</CardTitle>
             <CardDescription>
-              Your account has been created. You can now sign in with your email and password.
+              Your account has been created. You are now signed in.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild className="w-full">
-              <Link href="/auth/login">Go to Sign In</Link>
+              <Link href="/">Go to Home</Link>
             </Button>
           </CardContent>
         </Card>
@@ -128,7 +151,10 @@ export default function SignUpPage() {
                   type="text"
                   placeholder="John Doe"
                   value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
+                  onChange={(e) => {
+                    setFullName(e.target.value);
+                    setError('');
+                  }}
                   required
                   disabled={loading}
                 />
@@ -141,7 +167,10 @@ export default function SignUpPage() {
                   type="email"
                   placeholder="your@email.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setError('');
+                  }}
                   required
                   disabled={loading}
                 />
@@ -154,13 +183,16 @@ export default function SignUpPage() {
                   type="password"
                   placeholder="••••••••"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setError('');
+                  }}
                   required
                   disabled={loading}
-                  minLength={6}
+                  minLength={8}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Must be at least 6 characters
+                  Min 8 chars: uppercase, lowercase, number, special char (!@#$%^&*)
                 </p>
               </div>
 

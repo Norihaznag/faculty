@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { SessionProvider } from 'next-auth/react';
 import { AuthProvider } from '@/lib/auth-context';
 
 type ProvidersProps = {
@@ -9,7 +10,9 @@ type ProvidersProps = {
 
 export function Providers({ children }: ProvidersProps) {
   return (
-    <AuthProvider>{children}</AuthProvider>
+    <SessionProvider>
+      <AuthProvider>{children}</AuthProvider>
+    </SessionProvider>
   );
 }
 
