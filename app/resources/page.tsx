@@ -97,96 +97,108 @@ export default function ResourcesPage() {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="space-y-4">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-              Browse Lessons
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              {filteredLessons.length} lesson{filteredLessons.length !== 1 ? 's' : ''} available
-            </p>
-          </div>
-
-          {/* Search Bar */}
-          <form
-            onSubmit={(e) => e.preventDefault()}
-            className="relative"
-          >
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
-            <Input
-              placeholder="Search by title or topic..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-12 bg-gray-100 dark:bg-slate-800 border-0 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 text-base"
-            />
-          </form>
-
-          {/* Filters - Horizontal on desktop, toggleable on mobile */}
-          <div className={`${showFilters ? 'block' : 'hidden'} lg:block space-y-3`}>
-            <div className="flex items-center justify-between gap-3">
-              <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-                <SelectTrigger className="flex-1 h-10 bg-gray-100 dark:bg-slate-800 border-0 rounded-lg">
-                  <SelectValue placeholder="All Subjects" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Subjects</SelectItem>
-                  {subjects.map((subject) => (
-                    <SelectItem key={subject.id} value={subject.id}>
-                      {subject.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={sortBy} onValueChange={(val) => setSortBy(val as any)}>
-                <SelectTrigger className="flex-1 h-10 bg-gray-100 dark:bg-slate-800 border-0 rounded-lg">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="views">Most Popular</SelectItem>
-                  <SelectItem value="recent">Newest First</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {(searchQuery || selectedSubject !== 'all' || sortBy !== 'views') && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setSearchQuery('');
-                    setSelectedSubject('all');
-                    setSortBy('views');
-                  }}
-                  className="h-10"
-                >
-                  Reset
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* Mobile Filter Toggle */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowFilters(!showFilters)}
-            className="lg:hidden w-full h-10"
-          >
-            <Sliders className="h-4 w-4 mr-2" />
-            {showFilters ? 'Hide' : 'Show'} Filters
-          </Button>
+      <div className="space-y-8">
+        {/* Header Section */}
+        <div>
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
+            Browse All Lessons
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">
+            Explore {lessons.length} lessons from Morocco's top universities
+          </p>
         </div>
 
-        {/* Results */}
+        {/* Search Bar */}
+        <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
+          <div className="relative">
+            <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+            <Input
+              placeholder="Search by title, topic, or keyword..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-12 h-11 bg-gray-100 dark:bg-slate-800 border-0 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 text-base"
+            />
+          </div>
+
+          {/* Filters Section */}
+          <div className="bg-gray-50 dark:bg-slate-900/50 rounded-lg p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Filters</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowFilters(!showFilters)}
+                className="lg:hidden"
+              >
+                {showFilters ? 'Hide' : 'Show'}
+              </Button>
+            </div>
+
+            {showFilters && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-2">
+                    Subject
+                  </label>
+                  <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+                    <SelectTrigger className="h-9 bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-700 rounded-md text-sm">
+                      <SelectValue placeholder="All Subjects" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Subjects</SelectItem>
+                      {subjects.map((subject) => (
+                        <SelectItem key={subject.id} value={subject.id}>
+                          {subject.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-2">
+                    Sort By
+                  </label>
+                  <Select value={sortBy} onValueChange={(val) => setSortBy(val as any)}>
+                    <SelectTrigger className="h-9 bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-700 rounded-md text-sm">
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="views">Most Popular</SelectItem>
+                      <SelectItem value="recent">Newest First</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {(searchQuery || selectedSubject !== 'all' || sortBy !== 'views') && (
+                  <div className="flex items-end">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSearchQuery('');
+                        setSelectedSubject('all');
+                        setSortBy('views');
+                      }}
+                      className="w-full h-9"
+                    >
+                      Clear Filters
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </form>
+
+        {/* Lessons Grid */}
         {loading ? (
           <div className="text-center py-12">
             <p className="text-gray-600 dark:text-gray-400">Loading lessons...</p>
           </div>
         ) : filteredLessons.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-600 dark:text-gray-400 mb-4">No lessons found</p>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">No lessons found matching your filters</p>
             <Button
               variant="outline"
               onClick={() => {
@@ -195,7 +207,7 @@ export default function ResourcesPage() {
                 setSortBy('views');
               }}
             >
-              Clear Filters
+              Reset Filters
             </Button>
           </div>
         ) : (
