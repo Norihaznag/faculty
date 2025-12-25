@@ -3,10 +3,26 @@ import prisma from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
+    const searchParams = request.nextUrl.searchParams;
+    const search = searchParams.get('search');
+
+    let where = { published: true };
+
+    if (search) {
+      where = {
+        ...where,
+        OR: [
+          { title: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
+          { content: { contains: search, mode: 'insensitive' } },
+        ],
+      };
+    }
+
     const lessons = await prisma.lesson.findMany({
-      where: { published: true },
+      where,
       include: { subject: true },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { views: 'desc' },
     });
 
     return NextResponse.json({ lessons });
