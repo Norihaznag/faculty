@@ -17,33 +17,33 @@ export default function SubjectPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const fetchData = async () => {
+      const { data: subjectData } = await supabase
+        .from('subjects')
+        .select('*')
+        .eq('slug', slug)
+        .maybeSingle();
+
+      if (subjectData) {
+        setSubject(subjectData);
+
+        const { data: lessonsData } = await supabase
+          .from('lessons')
+          .select('*')
+          .eq('subject_id', subjectData.id)
+          .eq('is_published', true)
+          .order('created_at', { ascending: false });
+
+        if (lessonsData) {
+          setLessons(lessonsData);
+        }
+      }
+
+      setLoading(false);
+    };
+    
     fetchData();
   }, [slug]);
-
-  const fetchData = async () => {
-    const { data: subjectData } = await supabase
-      .from('subjects')
-      .select('*')
-      .eq('slug', slug)
-      .maybeSingle();
-
-    if (subjectData) {
-      setSubject(subjectData);
-
-      const { data: lessonsData } = await supabase
-        .from('lessons')
-        .select('*')
-        .eq('subject_id', subjectData.id)
-        .eq('is_published', true)
-        .order('created_at', { ascending: false });
-
-      if (lessonsData) {
-        setLessons(lessonsData);
-      }
-    }
-
-    setLoading(false);
-  };
 
   if (loading) {
     return (

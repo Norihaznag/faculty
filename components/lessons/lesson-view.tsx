@@ -22,25 +22,25 @@ export function LessonView({ lesson }: LessonViewProps) {
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
 
   useEffect(() => {
+    const checkBookmark = async () => {
+      if (!user) return;
+
+      const { data } = await supabase
+        .from('bookmarks')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('lesson_id', lesson.id)
+        .maybeSingle();
+
+      setIsBookmarked(!!data);
+    };
+    
     if (user?.id) {
       checkBookmark();
     } else {
       setIsBookmarked(false);
     }
-  }, [user?.id, lesson.id]);
-
-  const checkBookmark = async () => {
-    if (!user) return;
-
-    const { data } = await supabase
-      .from('bookmarks')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('lesson_id', lesson.id)
-      .maybeSingle();
-
-    setIsBookmarked(!!data);
-  };
+  }, [user, user?.id, lesson.id]);
 
   const toggleBookmark = async () => {
     if (!user) return;

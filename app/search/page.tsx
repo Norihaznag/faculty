@@ -16,34 +16,34 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const searchLessons = async () => {
+      setLoading(true);
+
+      try {
+        const { data, error } = await supabase
+          .from('lessons')
+          .select('*, subject:subjects(*)')
+          .eq('is_published', true)
+          .or(`title.ilike.%${query}%,content.ilike.%${query}%`)
+          .order('views', { ascending: false })
+          .limit(50);
+
+        if (error) throw error;
+
+        setLessons(data || []);
+      } catch (error) {
+        setLessons([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
     if (query) {
       searchLessons();
     } else {
       setLoading(false);
     }
   }, [query]);
-
-  const searchLessons = async () => {
-    setLoading(true);
-
-    try {
-      const { data, error } = await supabase
-        .from('lessons')
-        .select('*, subject:subjects(*)')
-        .eq('is_published', true)
-        .or(`title.ilike.%${query}%,content.ilike.%${query}%`)
-        .order('views', { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
-
-      setLessons(data || []);
-    } catch (error) {
-      setLessons([]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <MainLayout>

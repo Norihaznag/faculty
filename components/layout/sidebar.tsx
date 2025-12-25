@@ -18,7 +18,7 @@ type SidebarProps = {
 
 export function Sidebar({ isOpen, onClose, isMobile = false }: SidebarProps) {
   const pathname = usePathname();
-  const { user, isAdmin, isModerator } = useAuth();
+  const { user, isAdmin, isTeacher } = useAuth();
   type SidebarLesson = { id: string; title: string; slug: string };
 
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -115,7 +115,7 @@ export function Sidebar({ isOpen, onClose, isMobile = false }: SidebarProps) {
             {/* Main Navigation */}
             <div className="space-y-1 pb-3">
               {navItems
-                .filter((item) => !item.adminOnly || isAdmin || isModerator)
+                .filter((item) => !item.adminOnly || isAdmin || isTeacher)
                 .map((item) => (
                   <Link
                     key={item.href}

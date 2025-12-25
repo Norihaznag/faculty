@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layout/main-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,22 +31,15 @@ export default function MyUploadsPage() {
   const [uploadToDelete, setUploadToDelete] = useState<Upload | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/auth/login');
-    } else if (user) {
-      fetchUploads();
-    }
-  }, [user, authLoading]);
-
-  const fetchUploads = async () => {
+  const fetchUploads = useCallback(async () => {
+    if (!user?.id) return;
+    
     try {
       setLoading(true);
-      // Fetch uploads first (without joins to avoid RLS issues)
       const { data, error } = await supabase
         .from('uploads')
         .select('*')
-        .eq('uploader_id', user?.id || '')
+        .eq('uploader_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -54,7 +47,6 @@ export default function MyUploadsPage() {
         return;
       }
 
-      // Fetch related data separately
       const uploadsWithRelations = await Promise.all(
         (data || []).map(async (upload) => {
           const [subjectRes, uploaderRes] = await Promise.all([
@@ -79,7 +71,15 @@ export default function MyUploadsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/auth/login');
+    } else if (user) {
+      fetchUploads();
+    }
+  }, [user, authLoading, router, fetchUploads]);
 
   const handleDelete = async () => {
     if (!uploadToDelete) return;
@@ -309,7 +309,7 @@ export default function MyUploadsPage() {
             <AlertDialogHeader>
               <AlertDialogTitle>Delete Upload</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete "{uploadToDelete?.title}"? This action cannot be undone.
+                Are you sure you want to delete &quot;{uploadToDelete?.title}&quot;? This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

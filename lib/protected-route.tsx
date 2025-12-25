@@ -5,16 +5,16 @@ import { useRouter } from 'next/navigation';
 import { ReactNode, useEffect } from 'react';
 
 export function ProtectedRoute({ children, requiredRole }: { children: ReactNode; requiredRole?: string }) {
-  const { user, profile, loading } = useAuth();
+  const { user, isAdmin, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/auth/login');
-    } else if (!loading && requiredRole && profile?.role !== requiredRole && profile?.role !== 'admin') {
+    } else if (!loading && requiredRole && requiredRole === 'admin' && !isAdmin) {
       router.push('/');
     }
-  }, [loading, user, profile, requiredRole, router]);
+  }, [loading, user, isAdmin, requiredRole, router]);
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
@@ -24,7 +24,7 @@ export function ProtectedRoute({ children, requiredRole }: { children: ReactNode
     return null;
   }
 
-  if (requiredRole && profile?.role !== requiredRole && profile?.role !== 'admin') {
+  if (requiredRole && requiredRole === 'admin' && !isAdmin) {
     return <div className="flex items-center justify-center min-h-screen">Access Denied</div>;
   }
 

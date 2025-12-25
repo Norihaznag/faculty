@@ -43,23 +43,23 @@ export default function UploadPage() {
   const [metaDescription, setMetaDescription] = useState('');
 
   useEffect(() => {
+    const fetchSubjects = async () => {
+      const { data } = await supabase
+        .from('subjects')
+        .select('*')
+        .order('order_index');
+
+      if (data) {
+        setSubjects(data);
+      }
+    };
+    
     if (!authLoading && !user) {
       router.push('/auth/login');
     } else {
       fetchSubjects();
     }
-  }, [user, authLoading]);
-
-  const fetchSubjects = async () => {
-    const { data } = await supabase
-      .from('subjects')
-      .select('*')
-      .order('order_index');
-
-    if (data) {
-      setSubjects(data);
-    }
-  };
+  }, [user, authLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,8 +97,6 @@ export default function UploadPage() {
       .map((t) => t.trim())
       .filter(Boolean);
 
-    const isAdmin = isAdmin;
-    
     // If admin, publish directly as lesson. Otherwise, create upload for review.
     if (isAdmin) {
       // Admin uploads go directly to lessons
@@ -332,7 +330,7 @@ export default function UploadPage() {
                         Your submission has been received and is pending admin approval!
                         {suggestedSubjectName && !subjectId && (
                           <span className="block mt-1 text-xs">
-                            Note: You suggested a new faculty "{suggestedSubjectName}". Admin will review and create it if approved.
+                            Note: You suggested a new faculty &quot;{suggestedSubjectName}&quot;. Admin will review and create it if approved.
                           </span>
                         )}
                       </>
@@ -439,7 +437,7 @@ export default function UploadPage() {
                                 }}
                               >
                                 <span className="mr-2 text-primary font-medium">+</span>
-                                Use "{suggestedSubjectName}" as a new faculty
+                                Use &quot;{suggestedSubjectName}&quot; as a new faculty
                               </CommandItem>
                             </CommandGroup>
                           )}
@@ -471,7 +469,7 @@ export default function UploadPage() {
                 </Popover>
                 {suggestedSubjectName && !subjectId && (
                   <p className="text-xs text-muted-foreground">
-                    ✓ New faculty "{suggestedSubjectName}" will be suggested to admin
+                    ✓ New faculty &quot;{suggestedSubjectName}&quot; will be suggested to admin
                   </p>
                 )}
               </div>

@@ -24,7 +24,7 @@ type HeaderProps = {
 
 export function Header({ onMenuClick, sidebarOpen = false }: HeaderProps) {
   const router = useRouter();
-  const { user, profile } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<{
     lessons: { id: string; title: string; slug: string; subject?: { name?: string } | null }[];
@@ -250,10 +250,10 @@ export function Header({ onMenuClick, sidebarOpen = false }: HeaderProps) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48 sm:w-56 bg-white">
                 <div className="px-2 py-1.5">
-                  <p className="text-sm font-medium text-foreground truncate">{profile?.full_name || user.email}</p>
-                  <p className="text-xs text-muted truncate">{user.email}</p>
+                  <p className="text-sm font-medium text-foreground truncate">{user?.name || user?.email}</p>
+                  <p className="text-xs text-muted truncate">{user?.email}</p>
                   <p className="text-xs text-primary capitalize font-medium mt-1">
-                    {profile?.role}
+                    {isAdmin ? 'Admin' : 'Student'}
                   </p>
                 </div>
                 <DropdownMenuSeparator />
@@ -263,7 +263,7 @@ export function Header({ onMenuClick, sidebarOpen = false }: HeaderProps) {
                 <DropdownMenuItem asChild className="cursor-pointer">
                   <Link href="/upload">Upload</Link>
                 </DropdownMenuItem>
-                {profile?.role === 'admin' && (
+                {isAdmin && (
                   <DropdownMenuItem asChild className="cursor-pointer">
                     <Link href="/admin">Admin</Link>
                   </DropdownMenuItem>

@@ -256,18 +256,18 @@ export default function AdminPage() {
     setUpdatingRole(false);
   };
 
-  const handleToggleUserStatus = async (user: Profile) => {
+  const handleToggleUserStatus = async (targetUser: Profile) => {
     const { error } = await supabase
       .from('profiles')
-      .update({ is_active: !user.is_active })
-      .eq('id', user.id);
+      .update({ is_active: !targetUser.is_active })
+      .eq('id', targetUser.id);
 
     if (error) {
       alert('Failed to update user status. Please try again.');
     } else {
       await fetchUsers();
       // If deactivating current user, sign them out
-      if (user.id === profile?.id && user.is_active) {
+      if (targetUser.id === user?.id && targetUser.is_active) {
         await supabase.auth.signOut();
         router.push('/auth/login');
       }
@@ -753,7 +753,7 @@ export default function AdminPage() {
                           <div className="flex-1">
                             <CardTitle className="flex items-center gap-2">
                               {userProfile.full_name}
-                              {userProfile.id === profile?.id && (
+                              {userProfile.id === user?.id && (
                                 <Badge variant="outline" className="text-xs">You</Badge>
                               )}
                             </CardTitle>
@@ -802,7 +802,7 @@ export default function AdminPage() {
                               variant={userProfile.is_active ? 'destructive' : 'default'}
                               size="sm"
                               onClick={() => handleToggleUserStatus(userProfile)}
-                              disabled={userProfile.id === profile?.id}
+                              disabled={userProfile.id === user?.id}
                             >
                               {userProfile.is_active ? (
                                 <>
