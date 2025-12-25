@@ -99,123 +99,160 @@ export default function ResourcesPage() {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2 mb-2">
-            <SearchIcon className="h-6 w-6" /> All Resources
-          </h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            {filteredLessons.length} lessons found
-          </p>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
+        {/* Sidebar */}
+        <div className="lg:col-span-1 space-y-6">
+          <Card className="border-0 shadow-sm sticky top-4">
+            <CardHeader>
+              <CardTitle className="text-lg">Filters</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="text-sm font-semibold block mb-2">Faculty</label>
+                <Select value={selectedSubject || 'all'} onValueChange={setSelectedSubject}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="All Faculties" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Faculties</SelectItem>
+                    {subjects.map((subject) => (
+                      <SelectItem key={subject.id} value={subject.id}>
+                        {subject.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="text-sm font-semibold block mb-2">Sort By</label>
+                <Select value={sortBy} onValueChange={(val) => setSortBy(val as any)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="recent">Most Recent</SelectItem>
+                    <SelectItem value="views">Most Popular</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {activeFilters > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSelectedSubject('all');
+                    setSortBy('recent');
+                  }}
+                  className="w-full"
+                >
+                  <X className="h-4 w-4 mr-1" /> Clear Filters
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Stats Card */}
+          <Card className="border-0 shadow-sm bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-900">
+            <CardHeader>
+              <CardTitle className="text-base">📊 Stats</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Lessons</p>
+                <p className="text-2xl font-bold">{lessons.length}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Results Found</p>
+                <p className="text-2xl font-bold">{filteredLessons.length}</p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
+        {/* Main Content */}
+        <div className="lg:col-span-3 space-y-6">
         {/* Search Bar */}
-        <div className="relative">
-          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-          <Input
-            placeholder="Search lessons, topics, keywords..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 w-full"
-          />
-        </div>
-
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-          <Select value={selectedSubject || 'all'} onValueChange={setSelectedSubject}>
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="All Faculties" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Faculties</SelectItem>
-              {subjects.map((subject) => (
-                <SelectItem key={subject.id} value={subject.id}>
-                  {subject.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={sortBy} onValueChange={(val) => setSortBy(val as any)}>
-            <SelectTrigger className="w-full sm:w-40">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="recent">Most Recent</SelectItem>
-              <SelectItem value="views">Most Viewed</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {activeFilters > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setSearchQuery('');
-                setSelectedSubject('all');
-                setSortBy('recent');
-              }}
-              className="w-full sm:w-auto"
-            >
-              <X className="h-4 w-4 mr-1" /> Clear Filters
-            </Button>
-          )}
-        </div>
-
-        {/* Results */}
-        {loading ? (
-          <div className="text-center py-12">
-            <p>Loading resources...</p>
+          <div className="relative">
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
+            <Input
+              placeholder="Search lessons, topics, keywords..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 w-full"
+            />
           </div>
-        ) : filteredLessons.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground mb-4">No resources found</p>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setSearchQuery('');
-                setSelectedSubject('all');
-              }}
-            >
-              Clear Filters & Try Again
-            </Button>
+
+          {/* Header */}
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2 mb-2">
+              <SearchIcon className="h-6 w-6" /> All Resources
+            </h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
+              {filteredLessons.length} lessons found
+            </p>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredLessons.map((lesson) => (
-              <Link key={lesson.id} href={`/lessons/${lesson.slug}`} className="group">
-                <Card className="h-full border border-border/60 hover:border-primary/50 hover:shadow-md transition-all">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <CardTitle className="text-base font-semibold group-hover:text-primary transition-colors line-clamp-2">
-                        {lesson.title}
-                      </CardTitle>
-                      {lesson.difficulty === 'advanced' && (
-                        <Badge variant="secondary" className="shrink-0 text-xs">
+
+          {/* Results */}
+          {loading ? (
+            <div className="text-center py-12">
+              <p>Loading resources...</p>
+            </div>
+          ) : filteredLessons.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground mb-4">No resources found</p>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedSubject('all');
+                }}
+              >
+                Clear Filters & Try Again
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredLessons.map((lesson) => (
+                <Link key={lesson.id} href={`/lessons/${lesson.slug}`} className="group">
+                  <Card className="h-full border-0 shadow-sm hover:shadow-md transition-all hover:border-blue-200">
+                    <div className="h-1 bg-gradient-to-r from-blue-400 to-indigo-600"></div>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <CardTitle className="text-base font-semibold group-hover:text-blue-600 transition-colors line-clamp-2">
+                          {lesson.title}
+                        </CardTitle>
+                        <Badge className="shrink-0 text-xs capitalize">
                           {lesson.difficulty}
                         </Badge>
-                      )}
-                    </div>
-                    <CardDescription className="text-xs sm:text-sm line-clamp-1">
-                      {lesson.subject?.name || 'No subject'}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <BookOpen className="h-3 w-3" />
-                        {lesson.views} views
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        )}
+                      </div>
+                      <CardDescription className="text-xs sm:text-sm line-clamp-1 text-blue-600 font-medium">
+                        {lesson.subject?.name || 'No subject'}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="text-sm text-muted-foreground">
+                        {lesson.description && (
+                          <p className="line-clamp-2 mb-3">{lesson.description}</p>
+                        )}
+                        <div className="flex items-center justify-between pt-2 border-t">
+                          <span className="text-xs text-gray-500">
+                            {lesson.views} views
+                          </span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </MainLayout>
   );
 }
+
 

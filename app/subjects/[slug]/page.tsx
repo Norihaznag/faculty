@@ -31,17 +31,46 @@ export default async function SubjectPage({ params }: Props) {
 
   return (
     <MainLayout>
-      <div className="container mx-auto px-4 py-10 space-y-10">
-        <div className="space-y-4">
-          <h1 className="text-4xl font-bold mb-2 text-foreground">
-            {subject.name}
-          </h1>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
+        {/* Sidebar */}
+        <div className="lg:col-span-1">
+          <Card className="border-0 shadow-sm sticky top-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-900">
+            <CardHeader>
+              {subject.icon && <div className="text-3xl mb-3">{subject.icon}</div>}
+              <CardTitle>{subject.name}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Total Lessons</p>
+                <p className="text-3xl font-bold">{lessons.length}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">Difficulty Levels</p>
+                <div className="space-y-1">
+                  {['beginner', 'intermediate', 'advanced'].map((level) => (
+                    <div key={level} className="flex items-center justify-between text-sm">
+                      <span className="capitalize">{level}</span>
+                      <span className="font-semibold">
+                        {lessons.filter((l) => l.difficulty === level).length}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="space-y-4">
-          <h2 className="text-2xl font-bold">
-            All Lessons ({lessons.length})
-          </h2>
+        {/* Main Content */}
+        <div className="lg:col-span-3 space-y-6">
+          <div className="space-y-4">
+            <h1 className="text-4xl font-bold mb-4 text-foreground">
+              {subject.name}
+            </h1>
+
+            <h2 className="text-2xl font-bold">
+              All Lessons ({lessons.length})
+            </h2>
           {lessons.length === 0 ? (
             <Card className="border border-border/60 bg-card/80 backdrop-blur-sm rounded-2xl">
               <CardContent className="pt-6">
@@ -82,6 +111,7 @@ export default async function SubjectPage({ params }: Props) {
               ))}
             </div>
           )}
+          </div>
         </div>
       </div>
     </MainLayout>
