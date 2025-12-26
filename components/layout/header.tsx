@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 import { Search, Menu, User, LogOut, LogIn, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,8 +49,8 @@ export function Header({ onMenuClick, sidebarOpen = false }: HeaderProps) {
               {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
             <Link href="/" className="flex items-center gap-2 font-bold text-lg flex-shrink-0 hover:opacity-80 transition-opacity">
-              <div className="w-7 h-7 bg-gradient-to-br from-blue-600 to-indigo-700 rounded flex items-center justify-center text-white text-xs font-bold">
-                F
+              <div className="w-7 h-7 bg-blue-600  rounded flex items-center justify-center text-white text-xs font-bold">
+                Uma
               </div>
               <span className="hidden sm:inline text-gray-900 dark:text-white">Faculty</span>
             </Link>
@@ -110,13 +111,7 @@ export function Header({ onMenuClick, sidebarOpen = false }: HeaderProps) {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={async () => {
-                        try {
-                          await fetch('/api/auth/logout', { method: 'POST' });
-                          router.push('/');
-                          router.refresh();
-                        } catch (error) {
-                          console.error('Logout error:', error);
-                        }
+                        await signOut({ redirect: true, callbackUrl: '/' });
                       }}
                     >
                       <LogOut className="h-4 w-4 mr-2" />
